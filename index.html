@@ -1,1166 +1,1155 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Éditeur d'intentions — Aleou</title>
-  <style>
-    :root {
-      --blue: #2563EB;
-      --blue-light: #EFF6FF;
-      --blue-border: #BFDBFE;
-      --red: #DC2626;
-      --red-light: #FEF2F2;
-      --green: #16A34A;
-      --green-light: #F0FDF4;
-      --gray-50: #F9FAFB;
-      --gray-100: #F3F4F6;
-      --gray-200: #E5E7EB;
-      --gray-300: #D1D5DB;
-      --gray-400: #9CA3AF;
-      --gray-500: #6B7280;
-      --gray-600: #4B5563;
-      --gray-700: #374151;
-      --gray-900: #111827;
-      --radius: 8px;
-      --radius-sm: 4px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aleou — Outils</title>
+<style>
+  /* ── VARIABLES ────────────────────────────────────────── */
+  :root {
+    --blue: #2563EB;
+    --blue-light: #EFF6FF;
+    --blue-border: #BFDBFE;
+    --red: #DC2626;
+    --red-light: #FEF2F2;
+    --green: #16A34A;
+    --green-light: #F0FDF4;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --success: #38a169;
+    --warning: #d69e2e;
+    --danger: #e53e3e;
+    --radius: 8px;
+    --radius-sm: 4px;
+    --radius-lg: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--gray-50);
-      color: var(--gray-900);
-      font-size: 14px;
-      line-height: 1.5;
-    }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
 
-    /* ── TOP BAR ─────────────────────────────── */
-    #topbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: white;
-      border-bottom: 1px solid var(--gray-200);
-      padding: 0 24px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--shadow);
-    }
-    #topbar .logo {
-      font-weight: 700;
-      font-size: 16px;
-      color: var(--blue);
-      margin-right: 8px;
-    }
-    #topbar .intent-badge {
-      background: var(--blue-light);
-      color: var(--blue);
-      border: 1px solid var(--blue-border);
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-    #topbar .spacer { flex: 1; }
-    #topbar .save-indicator {
-      font-size: 12px;
-      color: var(--gray-400);
-    }
-    #topbar .save-indicator.modified { color: var(--red); }
+  /* ── TOPBAR ────────────────────────────────────────────── */
+  #topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+  }
+  #topbar .logo {
+    font-weight: 700; font-size: 16px; color: var(--blue);
+    cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #topbar .logo:hover { opacity: 0.8; }
+  #topbar .sep { color: var(--gray-300); font-size: 18px; }
+  #topbar .tool-name { font-size: 14px; font-weight: 600; color: var(--gray-600); }
+  #topbar .intent-badge {
+    background: var(--blue-light); color: var(--blue);
+    border: 1px solid var(--blue-border);
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  #topbar .spacer { flex: 1; }
+  #topbar .save-indicator { font-size: 12px; color: var(--gray-400); }
+  #topbar .save-indicator.modified { color: var(--red); }
 
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 6px 14px;
-      transition: all 0.15s;
-    }
-    .btn-primary {
-      background: var(--blue);
-      color: white;
-    }
-    .btn-primary:hover { background: #1D4ED8; }
-    .btn-secondary {
-      background: white;
-      color: var(--gray-700);
-      border: 1px solid var(--gray-200);
-    }
-    .btn-secondary:hover { background: var(--gray-50); }
-    .btn-danger {
-      background: var(--red-light);
-      color: var(--red);
-      padding: 4px 10px;
-      font-size: 12px;
-    }
-    .btn-danger:hover { background: #FEE2E2; }
-    .btn-add {
-      background: var(--gray-50);
-      color: var(--blue);
-      border: 1px dashed var(--blue-border);
-      width: 100%;
-      padding: 8px;
-      font-size: 13px;
-      border-radius: var(--radius-sm);
-    }
-    .btn-add:hover { background: var(--blue-light); }
-    .btn-icon {
-      background: transparent;
-      color: var(--gray-400);
-      padding: 2px 6px;
-      font-size: 16px;
-      line-height: 1;
-      border-radius: var(--radius-sm);
-    }
-    .btn-icon:hover { background: var(--gray-100); color: var(--gray-700); }
-    .btn-icon.danger:hover { background: var(--red-light); color: var(--red); }
+  /* ── SHARED BUTTONS (class-based, no element pollution) ── */
+  .btn {
+    display: inline-flex; align-items: center;
+    padding: 7px 16px; border-radius: var(--radius-sm);
+    border: none; cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    font-family: inherit;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #1D4ED8; }
+  .btn-secondary { background: white; color: var(--gray-700); border: 1px solid var(--gray-200); }
+  .btn-secondary:hover { background: var(--gray-50); }
+  .btn-danger-soft { background: var(--red-light); color: var(--red); padding: 4px 10px; font-size: 12px; }
+  .btn-danger-soft:hover { background: #FEE2E2; }
+  .btn-add { background: var(--gray-50); color: var(--blue); border: 1px dashed var(--blue-border); width: 100%; padding: 8px; font-size: 13px; border-radius: var(--radius-sm); }
+  .btn-add:hover { background: var(--blue-light); }
+  .btn-icon { background: transparent; color: var(--gray-400); padding: 2px 6px; font-size: 16px; line-height: 1; border-radius: var(--radius-sm); border: none; cursor: pointer; }
+  .btn-icon:hover { background: var(--gray-100); color: var(--gray-700); }
+  .btn-icon.danger:hover { background: var(--red-light); color: var(--red); }
 
-    /* ── EMPTY STATE ──────────────────────────── */
-    #empty-state {
-      max-width: 480px;
-      margin: 80px auto;
-      text-align: center;
-    }
-    #drop-zone {
-      border: 2px dashed var(--gray-300);
-      border-radius: 12px;
-      padding: 48px 32px;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: white;
-    }
-    #drop-zone:hover, #drop-zone.drag-over {
-      border-color: var(--blue);
-      background: var(--blue-light);
-    }
-    #drop-zone .icon { font-size: 40px; margin-bottom: 12px; }
-    #drop-zone h2 { font-size: 16px; color: var(--gray-700); margin-bottom: 6px; }
-    #drop-zone p { font-size: 13px; color: var(--gray-400); }
-    #file-input { display: none; }
+  /* ── HOME SCREEN ───────────────────────────────────────── */
+  #view-home {
+    max-width: 760px; margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+  .home-header { text-align: center; margin-bottom: 48px; }
+  .home-header h1 { font-size: 26px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+  .home-header p { font-size: 15px; color: var(--gray-500); }
 
-    /* ── EDITOR LAYOUT ────────────────────────── */
-    #editor { display: none; max-width: 860px; margin: 0 auto; padding: 28px 24px 80px; }
+  .tool-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 600px) { .tool-cards { grid-template-columns: 1fr; } }
 
-    .section {
-      background: white;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius);
-      margin-bottom: 16px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--gray-100);
-      cursor: pointer;
-      user-select: none;
-    }
-    .section-header:hover { background: var(--gray-50); }
-    .section-title {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--gray-700);
-      flex: 1;
-    }
-    .section-icon { font-size: 16px; }
-    .chevron { font-size: 11px; color: var(--gray-400); transition: transform 0.2s; }
-    .section.collapsed .chevron { transform: rotate(-90deg); }
-    .section.collapsed .section-body { display: none; }
-    .section-body { padding: 18px; }
+  .tool-card {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: 12px; padding: 28px 24px;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: var(--shadow);
+    text-align: left;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .tool-card:hover {
+    border-color: var(--blue); transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.12);
+  }
+  .tool-card-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .tool-card-icon.editor { background: var(--blue-light); }
+  .tool-card-icon.dashboard { background: #F0FDF4; }
+  .tool-card h2 { font-size: 16px; font-weight: 700; color: var(--gray-900); }
+  .tool-card p { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+  .tool-card .arrow {
+    margin-top: auto; padding-top: 12px;
+    font-size: 13px; font-weight: 600; color: var(--blue);
+    display: flex; align-items: center; gap: 4px;
+  }
 
-    /* ── FORM FIELDS ──────────────────────────── */
-    .field { margin-bottom: 16px; }
-    .field:last-child { margin-bottom: 0; }
-    label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 6px;
-    }
-    input[type="text"], textarea, select {
-      width: 100%;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 8px 10px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--gray-900);
-      background: white;
-      transition: border-color 0.15s;
-      resize: vertical;
-    }
-    input[type="text"]:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-    }
-    textarea { min-height: 72px; }
-    textarea.tall { min-height: 96px; }
+  /* ── INTENT EDITOR STYLES ──────────────────────────────── */
+  #view-editor { display: none; max-width: 860px; margin: 0 auto; padding: 28px 24px 80px; }
+  #view-editor .guide-banner {
+    background: var(--blue-light); border: 1px solid var(--blue-border);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px;
+    font-size: 13px; color: var(--gray-700); line-height: 1.6;
+  }
+  #view-editor .guide-banner strong { color: var(--blue); }
 
-    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .section {
+    background: white; border: 1px solid var(--gray-200);
+    border-radius: var(--radius); margin-bottom: 16px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 18px; border-bottom: 1px solid var(--gray-100);
+    cursor: pointer; user-select: none;
+  }
+  .section-header:hover { background: var(--gray-50); }
+  .section-title { font-weight: 600; font-size: 14px; color: var(--gray-700); flex: 1; }
+  .section-icon { font-size: 16px; }
+  .chevron { font-size: 11px; color: var(--gray-400); transition: transform 0.2s; }
+  .section.collapsed .chevron { transform: rotate(-90deg); }
+  .section.collapsed .section-body { display: none; }
+  .section-body { padding: 18px; }
 
-    /* ── TAGS / CHIPS ─────────────────────────── */
-    .chips-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      padding: 6px 8px;
-      min-height: 40px;
-      background: white;
-      cursor: text;
-    }
-    .chips-container:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--gray-100);
-      color: var(--gray-700);
-      padding: 2px 8px 2px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-    .chip-remove {
-      cursor: pointer;
-      color: var(--gray-400);
-      font-size: 14px;
-      line-height: 1;
-      padding: 0 1px;
-    }
-    .chip-remove:hover { color: var(--red); }
-    .chip-input {
-      border: none;
-      outline: none;
-      font-size: 12px;
-      padding: 2px 4px;
-      min-width: 80px;
-      flex: 1;
-      font-family: inherit;
-      background: transparent;
-    }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
 
-    /* ── BULLET LIST ──────────────────────────── */
-    .bullet-list { display: flex; flex-direction: column; gap: 6px; }
-    .bullet-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 6px;
-    }
-    .bullet-item::before {
-      content: '•';
-      color: var(--gray-400);
-      padding-top: 8px;
-      flex-shrink: 0;
-    }
-    .bullet-item input[type="text"] { flex: 1; }
+  #view-editor label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--gray-500); text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 6px;
+  }
+  #view-editor input[type="text"],
+  #view-editor textarea,
+  #view-editor select {
+    width: 100%; border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm); padding: 8px 10px;
+    font-size: 13px; font-family: inherit;
+    color: var(--gray-900); background: white;
+    transition: border-color 0.15s; resize: vertical;
+  }
+  #view-editor input[type="text"]:focus,
+  #view-editor textarea:focus,
+  #view-editor select:focus {
+    outline: none; border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+  }
+  #view-editor textarea { min-height: 72px; }
+  #view-editor textarea.tall { min-height: 96px; }
 
-    /* ── SCENARIOS ────────────────────────────── */
-    .scenario-card {
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius);
-      margin-bottom: 12px;
-      overflow: hidden;
-    }
-    .scenario-card:last-of-type { margin-bottom: 0; }
-    .scenario-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: var(--gray-50);
-      border-bottom: 1px solid var(--gray-200);
-    }
-    .scenario-number {
-      width: 22px; height: 22px;
-      background: var(--blue);
-      color: white;
-      border-radius: 50%;
-      font-size: 11px;
-      font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .scenario-name-preview {
-      font-weight: 600;
-      font-size: 13px;
-      flex: 1;
-      color: var(--gray-700);
-    }
-    .scenario-body { padding: 16px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* ── ACTIONS (email drafts) ───────────────── */
-    .action-card {
-      border: 1px solid var(--gray-200);
-      border-radius: var(--radius-sm);
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
-    .action-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: var(--gray-50);
-      border-bottom: 1px solid var(--gray-200);
-    }
-    .recipient-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .recipient-badge.client {
-      background: #ECFDF5;
-      color: #065F46;
-    }
-    .recipient-badge.presta {
-      background: #FFF7ED;
-      color: #9A3412;
-    }
-    .action-body { padding: 12px; }
+  .chips-container {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    padding: 6px 8px; min-height: 40px; background: white; cursor: text;
+  }
+  .chips-container:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--gray-100); color: var(--gray-700);
+    padding: 2px 8px 2px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+  }
+  .chip.slot-used { background: #DCFCE7; color: #166534; }
+  .chip.slot-unused { background: #FEE2E2; color: #991B1B; }
+  .chip-remove { cursor: pointer; color: var(--gray-400); font-size: 14px; line-height: 1; padding: 0 1px; }
+  .chip-remove:hover { color: var(--red); }
+  .chip-input {
+    border: none; outline: none; font-size: 12px; padding: 2px 4px;
+    min-width: 80px; flex: 1; font-family: inherit; background: transparent;
+  }
 
-    select.recipient-select {
-      width: auto;
-      padding: 3px 8px;
-      font-size: 12px;
-      font-weight: 600;
-    }
+  .bullet-list { display: flex; flex-direction: column; gap: 6px; }
+  .bullet-item { display: flex; align-items: flex-start; gap: 6px; }
+  .bullet-item::before { content: '•'; color: var(--gray-400); padding-top: 8px; flex-shrink: 0; }
+  .bullet-item input[type="text"] { flex: 1; }
 
-    /* ── ADVANCED ─────────────────────────────── */
-    .research-table { width: 100%; border-collapse: collapse; }
-    .research-table th {
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--gray-500);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--gray-200);
-    }
-    .research-table td { padding: 4px 4px; vertical-align: top; }
-    .research-table tr:not(:last-child) td { border-bottom: 1px solid var(--gray-100); }
-    .research-table input { font-size: 12px; }
-    .research-table .col-name { width: 40%; }
+  .scenario-card { border: 1px solid var(--gray-200); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+  .scenario-card:last-of-type { margin-bottom: 0; }
+  .scenario-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+  .scenario-number { width: 22px; height: 22px; background: var(--blue); color: white; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .scenario-name-preview { font-weight: 600; font-size: 13px; flex: 1; color: var(--gray-700); }
+  .scenario-body { padding: 16px; }
 
-    /* ── MISC ─────────────────────────────────── */
-    .field-hint {
-      font-size: 11px;
-      color: var(--gray-400);
-      margin-top: 4px;
-    }
-    .divider { border: none; border-top: 1px solid var(--gray-100); margin: 16px 0; }
-    .flex-row { display: flex; align-items: center; gap: 8px; }
-    .mt-8 { margin-top: 8px; }
-    .mt-12 { margin-top: 12px; }
+  .action-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+  .action-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); }
+  .recipient-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .recipient-badge.client { background: #ECFDF5; color: #065F46; }
+  .recipient-badge.presta { background: #FFF7ED; color: #9A3412; }
+  .action-body { padding: 12px; }
+  #view-editor select.recipient-select { width: auto; padding: 3px 8px; font-size: 12px; font-weight: 600; }
 
-    /* ── TOOLTIP ───────────────────────────────── */
-    .label-row {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 6px;
-    }
-    .label-row label { margin-bottom: 0; }
-    .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
-    .tooltip-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px; height: 14px;
-      background: var(--gray-200);
-      color: var(--gray-500);
-      border-radius: 50%;
-      font-size: 9px;
-      font-weight: 700;
-      cursor: default;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .tooltip-box {
-      display: none;
-      position: absolute;
-      left: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: var(--gray-900);
-      color: white;
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 1.5;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      width: 280px;
-      z-index: 200;
-      box-shadow: var(--shadow-md);
-      pointer-events: none;
-    }
-    .tooltip-box::before {
-      content: '';
-      position: absolute;
-      left: -5px;
-      top: 50%;
-      transform: translateY(-50%);
-      border: 5px solid transparent;
-      border-right-color: var(--gray-900);
-      border-left: none;
-    }
-    .tooltip-wrap:hover .tooltip-box { display: block; }
+  .research-table { width: 100%; border-collapse: collapse; }
+  .research-table th { text-align: left; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 8px; border-bottom: 1px solid var(--gray-200); }
+  .research-table td { padding: 4px 4px; vertical-align: top; }
+  .research-table tr:not(:last-child) td { border-bottom: 1px solid var(--gray-100); }
+  .research-table input { font-size: 12px; }
+  .research-table .col-name { width: 40%; }
 
-    /* ── SLOT BADGES ───────────────────────────── */
-    .chip.slot-used {
-      background: #DCFCE7;
-      color: #166534;
-    }
-    .chip.slot-unused {
-      background: #FEE2E2;
-      color: #991B1B;
-    }
-    .chip.slot-used .chip-remove:hover { color: #166534; }
-    .chip.slot-unused .chip-remove:hover { color: #991B1B; }
+  .field-hint { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+  .divider { border: none; border-top: 1px solid var(--gray-100); margin: 16px 0; }
+  .flex-row { display: flex; align-items: center; gap: 8px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
 
-    /* ── VERIFICATION PANEL ─────────────────────── */
-    #sec-verify { border-color: transparent; box-shadow: none; background: transparent; }
-    #sec-verify .section-header { background: transparent; border: none; cursor: default; padding: 0 0 10px 0; }
-    #sec-verify .section-header:hover { background: transparent; }
-    #sec-verify .section-body { padding: 0; }
-    .verify-ok {
-      background: #F0FDF4;
-      border: 1px solid #BBF7D0;
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #166534;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .verify-issues { display: flex; flex-direction: column; gap: 8px; }
-    .verify-issue {
-      background: #FFFBEB;
-      border: 1px solid #FDE68A;
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #92400E;
-    }
-    .verify-issue .issue-title { font-weight: 600; margin-bottom: 4px; }
-    .verify-issue .issue-list { margin: 0; padding-left: 18px; }
-    .verify-issue .issue-list li { margin-top: 2px; font-family: monospace; font-size: 12px; }
+  .label-row { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+  .label-row label { margin-bottom: 0; }
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-icon { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: var(--gray-200); color: var(--gray-500); border-radius: 50%; font-size: 9px; font-weight: 700; cursor: default; flex-shrink: 0; line-height: 1; }
+  .tooltip-box { display: none; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: var(--gray-900); color: white; font-size: 12px; font-weight: 400; line-height: 1.5; padding: 10px 14px; border-radius: var(--radius-sm); width: 280px; z-index: 200; box-shadow: var(--shadow-md); pointer-events: none; }
+  .tooltip-box::before { content: ''; position: absolute; left: -5px; top: 50%; transform: translateY(-50%); border: 5px solid transparent; border-right-color: var(--gray-900); border-left: none; }
+  .tooltip-wrap:hover .tooltip-box { display: block; }
 
-    /* ── GUIDE PANEL ───────────────────────────── */
-    .guide-banner {
-      background: var(--blue-light);
-      border: 1px solid var(--blue-border);
-      border-radius: var(--radius);
-      padding: 14px 18px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      color: var(--gray-700);
-      line-height: 1.6;
-    }
-    .guide-banner strong { color: var(--blue); }
-  </style>
+  #sec-verify { border-color: transparent; box-shadow: none; background: transparent; }
+  #sec-verify .section-header { background: transparent; border: none; cursor: default; padding: 0 0 10px 0; }
+  #sec-verify .section-header:hover { background: transparent; }
+  #sec-verify .section-body { padding: 0; }
+  .verify-ok { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: #166534; display: flex; align-items: center; gap: 8px; }
+  .verify-issues { display: flex; flex-direction: column; gap: 8px; }
+  .verify-issue { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: #92400E; }
+  .verify-issue .issue-title { font-weight: 600; margin-bottom: 4px; }
+  .verify-issue .issue-list { margin: 0; padding-left: 18px; }
+  .verify-issue .issue-list li { margin-top: 2px; font-family: monospace; font-size: 12px; }
+
+  /* ── DASHBOARD STYLES ──────────────────────────────────── */
+  #view-dashboard { display: none; padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 16px 20px; }
+  .kpi-card .kpi-label { font-size: 11px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .kpi-card .kpi-value { font-size: 28px; font-weight: 700; }
+  .kpi-card .kpi-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .kpi-card.kpi-success .kpi-value { color: var(--success); }
+  .kpi-card.kpi-warning .kpi-value { color: var(--warning); }
+  .kpi-card.kpi-danger .kpi-value { color: var(--danger); }
+  .kpi-card.kpi-primary .kpi-value { color: var(--blue); }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  @media (max-width: 760px) { .charts-row { grid-template-columns: 1fr; } }
+  .chart-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 16px 20px; }
+  .chart-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--gray-500); }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { width: 120px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--gray-100); border-radius: 4px; height: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+  .bar-count { width: 32px; text-align: right; font-size: 12px; color: var(--gray-400); flex-shrink: 0; }
+
+  .hist { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+  .hist-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .hist-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.4s; }
+  .hist-label { font-size: 10px; color: var(--gray-400); margin-top: 4px; }
+
+  .csv-upload-zone {
+    margin: 40px auto; max-width: 520px; background: white;
+    border: 2px dashed var(--gray-300); border-radius: var(--radius-lg);
+    padding: 48px 32px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .csv-upload-zone:hover, .csv-upload-zone.drag-over { border-color: var(--blue); background: var(--blue-light); }
+  .csv-upload-zone p { color: var(--gray-400); margin-bottom: 8px; }
+
+  .dash-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .dash-top-bar h2 { font-size: 15px; color: var(--gray-500); font-weight: 500; }
+  .dash-top-bar strong { color: var(--gray-900); }
+
+  .filters { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .filters .f-label { font-size: 12px; color: var(--gray-400); margin-right: 4px; }
+  .filters select, .filters input[type="text"] { padding: 6px 10px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 13px; background: var(--gray-50); color: var(--gray-900); font-family: inherit; }
+  .filters .spacer { flex: 1; }
+  #row-count { font-size: 12px; color: var(--gray-400); }
+
+  .table-wrap { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); overflow: hidden; }
+  .table-scroll { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { position: sticky; top: 0; background: var(--gray-50); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray-500); border-bottom: 1px solid var(--gray-200); white-space: nowrap; cursor: pointer; user-select: none; }
+  thead th:hover { color: var(--blue); }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--blue); }
+  tbody tr { border-bottom: 1px solid var(--gray-200); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--gray-50); }
+  tbody td { padding: 9px 14px; vertical-align: top; }
+  .truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+  .truncate:hover { white-space: normal; overflow: visible; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-match { background: #c6f6d5; color: #22543d; }
+  .badge-fuzzy { background: #fefcbf; color: #744210; }
+  .badge-no-match { background: #fed7d7; color: #742a2a; }
+  .badge-flag { background: #fed7d7; color: #742a2a; }
+  .badge-ok { background: #c6f6d5; color: #22543d; }
+  .badge-tag { background: #e9d8fd; color: #44337a; }
+
+  .confidence-bar { display: flex; align-items: center; gap: 6px; }
+  .conf-track { width: 60px; height: 6px; background: var(--gray-200); border-radius: 3px; flex-shrink: 0; }
+  .conf-fill { height: 100%; border-radius: 3px; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: var(--radius-lg); padding: 28px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h3 { font-size: 15px; margin-bottom: 16px; }
+  .modal .close-btn { position: absolute; top: 16px; right: 16px; cursor: pointer; font-size: 18px; color: var(--gray-400); background: none; border: none; }
+  .modal-section { margin-bottom: 20px; }
+  .modal-section label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-400); display: block; margin-bottom: 6px; }
+  .modal-section pre { background: var(--gray-50); border-radius: 6px; padding: 12px; font-size: 12px; white-space: pre-wrap; word-break: break-word; border: 1px solid var(--gray-200); max-height: 200px; overflow-y: auto; }
+  .no-data { text-align: center; padding: 40px; color: var(--gray-400); }
+
+  /* ── EMPTY STATE (editor) ──────────────────────────────── */
+  #editor-empty-state { max-width: 480px; margin: 80px auto; text-align: center; }
+  #editor-drop-zone { border: 2px dashed var(--gray-300); border-radius: 12px; padding: 48px 32px; cursor: pointer; transition: all 0.2s; background: white; }
+  #editor-drop-zone:hover, #editor-drop-zone.drag-over { border-color: var(--blue); background: var(--blue-light); }
+  #editor-drop-zone .icon { font-size: 40px; margin-bottom: 12px; }
+  #editor-drop-zone h2 { font-size: 16px; color: var(--gray-700); margin-bottom: 6px; }
+  #editor-drop-zone p { font-size: 13px; color: var(--gray-400); }
+</style>
 </head>
 <body>
 
-<!-- TOP BAR -->
+<!-- ── TOPBAR ───────────────────────────────────────────── -->
 <div id="topbar">
-  <span class="logo">Aleou</span>
+  <a class="logo" onclick="showView('home')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Aleou
+  </a>
+  <span class="sep" id="topbar-sep" style="display:none">›</span>
+  <span class="tool-name" id="topbar-tool-name"></span>
   <span id="intent-badge" class="intent-badge" style="display:none"></span>
   <span class="spacer"></span>
   <span id="save-indicator" class="save-indicator" style="display:none">● modifications non sauvegardées</span>
-  <button class="btn-secondary" onclick="document.getElementById('file-input').click()">📂 Charger un fichier</button>
-  <button class="btn-primary" id="save-btn" onclick="saveFile()" style="display:none">💾 Télécharger le JSON</button>
-  <input type="file" id="file-input" accept=".json" onchange="handleFileInput(event)">
+  <button class="btn btn-secondary" id="btn-load-json" onclick="document.getElementById('file-input').click()" style="display:none">📂 Charger un fichier</button>
+  <button class="btn btn-primary" id="save-btn" onclick="saveFile()" style="display:none">💾 Télécharger le JSON</button>
+  <input type="file" id="file-input" accept=".json" onchange="handleFileInput(event)" style="display:none">
+  <span id="topbar-file-info" style="font-size:12px;color:var(--gray-400);display:none"></span>
 </div>
 
-<!-- EMPTY STATE -->
-<div id="empty-state">
-  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
-    <div class="icon">📄</div>
-    <h2>Charger un fichier d'intention</h2>
-    <p>Cliquez ici ou glissez-déposez un fichier .json</p>
+<!-- ── HOME ─────────────────────────────────────────────── -->
+<div id="view-home">
+  <div class="home-header">
+    <h1>Outils Aleou</h1>
+    <p>Choisissez un outil pour commencer</p>
+  </div>
+  <div class="tool-cards">
+    <div class="tool-card" onclick="showView('editor')">
+      <div class="tool-card-icon editor">📝</div>
+      <h2>Éditeur d'intentions</h2>
+      <p>Créez et modifiez les fichiers JSON qui définissent comment l'IA répond aux emails. Configurez scénarios, mots-clés, règles de sélection et variables.</p>
+      <div class="arrow">Ouvrir l'éditeur →</div>
+    </div>
+    <div class="tool-card" onclick="showView('dashboard')">
+      <div class="tool-card-icon dashboard">📊</div>
+      <h2>Dashboard de comparaison</h2>
+      <p>Analysez les performances du pipeline email. Chargez un export CSV de la Comparison Sheet pour visualiser les KPIs, taux de match et scores de confiance.</p>
+      <div class="arrow" style="color:var(--success)">Ouvrir le dashboard →</div>
+    </div>
   </div>
 </div>
 
-<!-- EDITOR -->
-<div id="editor">
+<!-- ── INTENT EDITOR ─────────────────────────────────────── -->
+<div id="view-editor" style="display:none">
 
-  <!-- GUIDE -->
-  <div class="guide-banner">
-    <strong>Comment utiliser cet éditeur ?</strong><br>
-    Chaque fichier d'intention décrit un type de demande que l'IA sait gérer (ex : demande de menus, statut des devis…).
-    Pour chaque intention, vous définissez <strong>des scénarios</strong> — c'est-à-dire les différentes situations possibles et les emails que l'IA doit rédiger en réponse.
-    Passez la souris sur le <strong>ⓘ</strong> à côté de chaque champ pour obtenir une explication.
-    Cliquez sur <strong>Télécharger le JSON</strong> quand vous avez terminé, puis déposez le fichier dans Google Drive.
-  </div>
-
-  <!-- INFORMATIONS GÉNÉRALES -->
-  <div class="section" id="sec-general">
-    <div class="section-header" onclick="toggleSection('sec-general')">
-      <span class="section-icon">📋</span>
-      <span class="section-title">Informations générales</span>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="section-body">
-      <div class="row-2">
-        <div class="field">
-          <div class="label-row">
-            <label>Type d'intention</label>
-            <span class="tooltip-wrap">
-              <span class="tooltip-icon">i</span>
-              <span class="tooltip-box">Identifiant unique de cette intention. Doit être en MAJUSCULES avec des underscores. Ne pas modifier sauf si vous créez une nouvelle intention depuis zéro — cet identifiant est utilisé par le pipeline pour retrouver le bon fichier.</span>
-            </span>
-          </div>
-          <input type="text" id="f-intent_type" oninput="markModified()" placeholder="Ex: MENU_REQUEST">
-        </div>
-        <div class="field">
-          <div class="label-row">
-            <label>Tags</label>
-            <span class="tooltip-wrap">
-              <span class="tooltip-icon">i</span>
-              <span class="tooltip-box">Étiquettes de catégorisation apposées sur l'email traité. Servent à filtrer et analyser les emails dans les rapports. Ex : CLIENT, RESTAURATION, DEVIS. Appuyez sur Entrée pour valider chaque tag.</span>
-            </span>
-          </div>
-          <div class="chips-container" id="tags-container" onclick="this.querySelector('.chip-input').focus()"></div>
-        </div>
-      </div>
-      <div class="field">
-        <div class="label-row">
-          <label>Résumé</label>
-          <span class="tooltip-wrap">
-            <span class="tooltip-icon">i</span>
-            <span class="tooltip-box">Une ou deux phrases qui décrivent en quoi consiste cette intention. L'IA utilise ce résumé pour comprendre le contexte global avant de choisir un scénario. Soyez précis et concis.</span>
-          </span>
-        </div>
-        <textarea id="f-summary" rows="2" oninput="markModified()" placeholder="Ex: Le client demande à recevoir les menus de restauration et les options repas disponibles."></textarea>
-      </div>
+  <!-- Empty state -->
+  <div id="editor-empty-state">
+    <div id="editor-drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📄</div>
+      <h2>Charger un fichier d'intention</h2>
+      <p>Cliquez ici ou glissez-déposez un fichier .json</p>
     </div>
   </div>
 
-  <!-- EXEMPLES -->
-  <div class="section" id="sec-examples">
-    <div class="section-header" onclick="toggleSection('sec-examples')">
-      <span class="section-icon">💡</span>
-      <span class="section-title">Exemples de classification</span>
-      <span class="chevron">▼</span>
+  <!-- Editor content -->
+  <div id="editor-content" style="display:none">
+    <div class="guide-banner">
+      <strong>Comment utiliser cet éditeur ?</strong><br>
+      Chaque fichier d'intention décrit un type de demande que l'IA sait gérer.
+      Pour chaque intention, définissez <strong>des scénarios</strong> — les différentes situations et les emails que l'IA rédige en réponse.
+      Passez la souris sur le <strong>ⓘ</strong> pour des explications. Cliquez sur <strong>Télécharger le JSON</strong> quand vous avez terminé.
     </div>
-    <div class="section-body">
-      <p class="field-hint" style="margin-bottom:14px">Ces exemples servent à entraîner l'IA à reconnaître cette intention dans un email. Plus il y en a, meilleure est la classification.</p>
-      <div class="row-2">
-        <div class="field">
-          <div class="label-row">
-            <label>Mots-clés</label>
-            <span class="tooltip-wrap">
-              <span class="tooltip-icon">i</span>
-              <span class="tooltip-box">Mots ou expressions courts qui, s'ils apparaissent dans un email, suggèrent fortement cette intention. L'IA les utilise comme indices de classification. Appuyez sur Entrée pour valider chaque mot-clé.</span>
-            </span>
+
+    <div class="section" id="sec-general">
+      <div class="section-header" onclick="toggleSection('sec-general')">
+        <span class="section-icon">📋</span><span class="section-title">Informations générales</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="row-2">
+          <div class="field">
+            <div class="label-row">
+              <label>Type d'intention</label>
+              <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Identifiant unique de cette intention. Doit être en MAJUSCULES avec des underscores. Ne pas modifier sauf si vous créez une nouvelle intention depuis zéro.</span></span>
+            </div>
+            <input type="text" id="f-intent_type" oninput="markModified()" placeholder="Ex: MENU_REQUEST">
           </div>
-          <div class="chips-container" id="keywords-container" onclick="this.querySelector('.chip-input').focus()"></div>
-          <p class="field-hint">Appuyez sur Entrée pour ajouter</p>
+          <div class="field">
+            <div class="label-row">
+              <label>Tags</label>
+              <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Étiquettes de catégorisation. Servent à filtrer et analyser les emails dans les rapports. Appuyez sur Entrée pour valider chaque tag.</span></span>
+            </div>
+            <div class="chips-container" id="tags-container" onclick="this.querySelector('.chip-input').focus()"></div>
+          </div>
         </div>
         <div class="field">
           <div class="label-row">
-            <label>Phrases exemples</label>
-            <span class="tooltip-wrap">
-              <span class="tooltip-icon">i</span>
-              <span class="tooltip-box">Exemples de phrases complètes qu'un client ou prestataire pourrait écrire pour exprimer cette intention. Ajoutez-en autant que possible — chaque variante améliore la précision de la classification.</span>
-            </span>
+            <label>Résumé</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Une ou deux phrases décrivant cette intention. L'IA utilise ce résumé pour comprendre le contexte global avant de choisir un scénario.</span></span>
           </div>
-          <div id="phrases-list" class="bullet-list"></div>
-          <button class="btn-add mt-8" onclick="addPhrase()">+ Ajouter une phrase</button>
+          <textarea id="f-summary" rows="2" oninput="markModified()" placeholder="Ex: Le client demande à recevoir les menus de restauration et les options repas disponibles."></textarea>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- SCÉNARIOS -->
-  <div class="section" id="sec-scenarios">
-    <div class="section-header" onclick="toggleSection('sec-scenarios')">
-      <span class="section-icon">🗂️</span>
-      <span class="section-title">Scénarios</span>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="section-body">
-      <p class="field-hint" style="margin-bottom:14px">Un scénario = une situation particulière et la réponse appropriée. L'IA choisit automatiquement le bon scénario selon les données du dossier. <strong>Le dernier scénario doit toujours être le "Fallback"</strong> (cas non couverts).</p>
-      <div id="scenarios-list"></div>
-      <button class="btn-add mt-12" onclick="addScenario()">+ Ajouter un scénario</button>
-    </div>
-  </div>
-
-  <!-- RÈGLES DE SÉLECTION -->
-  <div class="section" id="sec-rules">
-    <div class="section-header" onclick="toggleSection('sec-rules')">
-      <span class="section-icon">⚖️</span>
-      <span class="section-title">Règles de sélection du scénario</span>
-      <span class="chevron">▼</span>
-    </div>
-    <div class="section-body">
-      <p class="field-hint" style="margin-bottom:14px">Ces règles expliquent à l'IA comment choisir le bon scénario selon la situation. Référencez les scénarios par leur <strong>clé</strong> (ex : <code>menus_already_in_quote</code>).</p>
-      <div class="field">
-        <div class="label-row">
-          <label>Règle — email venant du client</label>
-          <span class="tooltip-wrap">
-            <span class="tooltip-icon">i</span>
-            <span class="tooltip-box">Décrit la logique de décision lorsque l'email vient de l'organisateur de l'événement (le client). Listez les conditions dans l'ordre de priorité et indiquez la clé du scénario correspondant. Ex : "Si les menus sont dans le devis → menus_already_in_quote. Sinon → fallback."</span>
-          </span>
-        </div>
-        <textarea id="f-rule-client" class="tall" oninput="markModified()" placeholder="Ex: Si les menus sont présents dans le devis → menus_already_in_quote. Si régimes spécifiques mentionnés → specific_dietary_requirements. Sinon → fallback."></textarea>
+    <div class="section" id="sec-examples">
+      <div class="section-header" onclick="toggleSection('sec-examples')">
+        <span class="section-icon">💡</span><span class="section-title">Exemples de classification</span><span class="chevron">▼</span>
       </div>
-      <div class="field">
-        <div class="label-row">
-          <label>Règle — email venant du prestataire</label>
-          <span class="tooltip-wrap">
-            <span class="tooltip-icon">i</span>
-            <span class="tooltip-box">Décrit la logique de décision lorsque l'email vient du lieu ou du prestataire (hôtel, traiteur, etc.). Si aucun email prestataire n'est prévu pour cette intention, indiquez-le explicitement.</span>
-          </span>
+      <div class="section-body">
+        <p class="field-hint" style="margin-bottom:14px">Ces exemples servent à entraîner l'IA à reconnaître cette intention dans un email.</p>
+        <div class="row-2">
+          <div class="field">
+            <div class="label-row">
+              <label>Mots-clés</label>
+              <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Mots ou expressions courts qui, s'ils apparaissent dans un email, suggèrent fortement cette intention. Appuyez sur Entrée pour valider.</span></span>
+            </div>
+            <div class="chips-container" id="keywords-container" onclick="this.querySelector('.chip-input').focus()"></div>
+            <p class="field-hint">Appuyez sur Entrée pour ajouter</p>
+          </div>
+          <div class="field">
+            <div class="label-row">
+              <label>Phrases exemples</label>
+              <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Exemples de phrases complètes qu'un client ou prestataire pourrait écrire pour exprimer cette intention.</span></span>
+            </div>
+            <div id="phrases-list" class="bullet-list"></div>
+            <button class="btn btn-add mt-8" onclick="addPhrase()">+ Ajouter une phrase</button>
+          </div>
         </div>
-        <textarea id="f-rule-presta" class="tall" oninput="markModified()" placeholder="Ex: Si les menus ne sont pas encore fournis → menus_not_yet_provided. Pas d'emails aux prestataires dans les autres scénarios."></textarea>
       </div>
     </div>
+
+    <div class="section" id="sec-scenarios">
+      <div class="section-header" onclick="toggleSection('sec-scenarios')">
+        <span class="section-icon">🗂️</span><span class="section-title">Scénarios</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <p class="field-hint" style="margin-bottom:14px">Un scénario = une situation particulière et la réponse appropriée. <strong>Le dernier scénario doit toujours être le "Fallback"</strong>.</p>
+        <div id="scenarios-list"></div>
+        <button class="btn btn-add mt-12" onclick="addScenario()">+ Ajouter un scénario</button>
+      </div>
+    </div>
+
+    <div class="section" id="sec-rules">
+      <div class="section-header" onclick="toggleSection('sec-rules')">
+        <span class="section-icon">⚖️</span><span class="section-title">Règles de sélection du scénario</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <p class="field-hint" style="margin-bottom:14px">Ces règles expliquent à l'IA comment choisir le bon scénario. Référencez les scénarios par leur <strong>clé</strong>.</p>
+        <div class="field">
+          <div class="label-row">
+            <label>Règle — email venant du client</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Décrit la logique de décision lorsque l'email vient de l'organisateur. Listez les conditions dans l'ordre de priorité.</span></span>
+          </div>
+          <textarea id="f-rule-client" class="tall" oninput="markModified()" placeholder="Ex: Si les menus sont dans le devis → menus_already_in_quote. Sinon → fallback."></textarea>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label>Règle — email venant du prestataire</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Décrit la logique de décision lorsque l'email vient du lieu ou du prestataire. Si aucun email prestataire n'est prévu, indiquez-le explicitement.</span></span>
+          </div>
+          <textarea id="f-rule-presta" class="tall" oninput="markModified()" placeholder="Ex: Si les menus ne sont pas encore fournis → menus_not_yet_provided."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section collapsed" id="sec-advanced">
+      <div class="section-header" onclick="toggleSection('sec-advanced')">
+        <span class="section-icon">⚙️</span><span class="section-title">Paramètres avancés</span><span class="chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="field">
+          <div class="label-row">
+            <label>Zones de recherche dans les données du dossier</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Indique à l'IA quels champs du dossier API elle doit consulter. Utilisez la notation pointée : objet.sous_champ (ex: brief.catering).</span></span>
+          </div>
+          <table class="research-table">
+            <thead><tr><th class="col-name">Champ du dossier</th><th>Pourquoi l'IA en a besoin</th><th style="width:40px"></th></tr></thead>
+            <tbody id="research-list"></tbody>
+          </table>
+          <button class="btn btn-add mt-8" onclick="addResearch()">+ Ajouter une zone</button>
+        </div>
+        <hr class="divider">
+        <div class="field">
+          <div class="label-row">
+            <label>Slots nécessaires</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Variables que l'IA doit extraire du dossier pour construire la réponse. Ces variables sont injectées dans les emails générés sous la forme [NOM_VARIABLE].</span></span>
+          </div>
+          <div class="chips-container" id="slots-container" onclick="this.querySelector('.chip-input').focus()"></div>
+          <p class="field-hint">Appuyez sur Entrée pour ajouter. Variables utilisées dans les emails : <span style="color:var(--green)">■</span> vert = OK, <span style="color:var(--red)">■</span> rouge = non utilisée.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-verify">
+      <div class="section-header">
+        <span class="section-icon">🔍</span><span class="section-title">Vérification des slots</span>
+      </div>
+      <div class="section-body"><div id="verify-panel"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ─────────────────────────────────────────── -->
+<div id="view-dashboard" style="display:none">
+
+  <!-- Upload zone -->
+  <div id="csv-upload-section">
+    <div class="csv-upload-zone" id="csv-drop-zone">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray-400);margin-bottom:12px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p>Glisse-dépose ton fichier CSV ici</p>
+      <p><strong>ou</strong></p>
+      <button class="btn btn-primary" onclick="document.getElementById('csv-input').click()">Choisir un fichier</button>
+      <input type="file" id="csv-input" accept=".csv" style="display:none">
+      <p style="margin-top:16px;font-size:12px;color:var(--gray-400);">Exporte depuis Google Sheets → Fichier → Télécharger → CSV</p>
+    </div>
   </div>
 
-  <!-- AVANCÉ -->
-  <div class="section collapsed" id="sec-advanced">
-    <div class="section-header" onclick="toggleSection('sec-advanced')">
-      <span class="section-icon">⚙️</span>
-      <span class="section-title">Paramètres avancés</span>
-      <span class="chevron">▼</span>
+  <!-- Dashboard content -->
+  <div id="dash-content" style="display:none">
+    <div class="dash-top-bar">
+      <h2>Fichier : <strong id="dash-file-name">—</strong></h2>
+      <button class="btn btn-secondary" onclick="resetDashboard()">← Charger un autre fichier</button>
     </div>
-    <div class="section-body">
-      <div class="field">
-        <div class="label-row">
-          <label>Zones de recherche dans les données du dossier</label>
-          <span class="tooltip-wrap">
-            <span class="tooltip-icon">i</span>
-            <span class="tooltip-box">Indique à l'IA quels champs du dossier API elle doit consulter pour appliquer les scénarios. Utilisez la notation pointée : objet.sous_champ (ex: brief.catering, supplier_proposals[].quote_url). Plus c'est précis, meilleure est la réponse.</span>
-          </span>
-        </div>
-        <table class="research-table">
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="charts-row">
+      <div class="chart-card"><h3>Distribution par Tag</h3><div class="bar-chart" id="chart-tags"></div></div>
+      <div class="chart-card"><h3>Distribution par méthode de match</h3><div class="bar-chart" id="chart-methods"></div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:24px;">
+      <h3>Histogramme Confidence Score</h3>
+      <div class="hist" id="hist-confidence"></div>
+    </div>
+    <div class="filters">
+      <span class="f-label">Tag</span>
+      <select id="filter-tag" onchange="applyFilters()"><option value="">Tous</option></select>
+      <span class="f-label">Méthode</span>
+      <select id="filter-method" onchange="applyFilters()"><option value="">Tous</option></select>
+      <span class="f-label">Flag</span>
+      <select id="filter-flag" onchange="applyFilters()">
+        <option value="">Tous</option>
+        <option value="TRUE">Flaggés uniquement</option>
+        <option value="FALSE">Non flaggés</option>
+      </select>
+      <span class="f-label">Recherche</span>
+      <input type="text" id="filter-search" placeholder="Référence, sujet…" oninput="applyFilters()">
+      <div class="spacer"></div>
+      <span id="row-count"></span>
+      <button class="btn btn-secondary" onclick="clearFilters()">Réinitialiser</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="data-table">
           <thead>
             <tr>
-              <th class="col-name">Champ du dossier</th>
-              <th>Pourquoi l'IA en a besoin</th>
-              <th style="width:40px"></th>
+              <th onclick="sortBy('Reference')">Référence <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('Subject')">Sujet <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('Tag')">Tag <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('Match_Method')">Méthode <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('Match_Confidence')">Confidence <span class="sort-icon">↕</span></th>
+              <th onclick="sortBy('Low_Confidence_Flag')">Flag <span class="sort-icon">↕</span></th>
+              <th>Détail</th>
             </tr>
           </thead>
-          <tbody id="research-list"></tbody>
+          <tbody id="table-body"></tbody>
         </table>
-        <button class="btn-add mt-8" onclick="addResearch()">+ Ajouter une zone</button>
       </div>
-      <hr class="divider">
-      <div class="field">
-        <div class="label-row">
-          <label>Slots nécessaires</label>
-          <span class="tooltip-wrap">
-            <span class="tooltip-icon">i</span>
-            <span class="tooltip-box">Variables que l'IA doit extraire ou calculer à partir du dossier pour construire la réponse. Ces variables sont ensuite injectées dans les emails générés. Ex : NB_DEVIS_RECUS, client_arrival_date, global_comments.</span>
-          </span>
-        </div>
-        <div class="chips-container" id="slots-container" onclick="this.querySelector('.chip-input').focus()"></div>
-        <p class="field-hint">Appuyez sur Entrée pour ajouter. Ces variables apparaissent entre crochets dans les emails : [NOM_VARIABLE].</p>
-      </div>
-      <!-- special_values : champ présent dans le schéma JSON mais jamais lu par le pipeline — masqué intentionnellement -->
     </div>
   </div>
+</div>
 
-  <!-- VÉRIFICATION -->
-  <div class="section" id="sec-verify">
-    <div class="section-header">
-      <span class="section-icon">🔍</span>
-      <span class="section-title">Vérification des slots</span>
-    </div>
-    <div class="section-body">
-      <div id="verify-panel"></div>
-    </div>
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <h3 id="modal-title">Détail</h3>
+    <div id="modal-content"></div>
   </div>
-
 </div>
 
 <script>
-  let intent = null;
-  let modified = false;
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+let currentView = 'home';
 
-  // ── FILE LOADING ───────────────────────────────────────
-  const dropZone = document.getElementById('drop-zone');
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) readFile(file);
-  });
+function showView(name) {
+  currentView = name;
+  document.getElementById('view-home').style.display = name === 'home' ? '' : 'none';
+  document.getElementById('view-editor').style.display = name === 'editor' ? '' : 'none';
+  document.getElementById('view-dashboard').style.display = name === 'dashboard' ? '' : 'none';
 
-  function handleFileInput(e) {
-    const file = e.target.files[0];
-    if (file) readFile(file);
-    e.target.value = '';
+  const sep = document.getElementById('topbar-sep');
+  const toolName = document.getElementById('topbar-tool-name');
+  const btnLoad = document.getElementById('btn-load-json');
+  const saveBtn = document.getElementById('save-btn');
+  const saveInd = document.getElementById('save-indicator');
+  const intentBadge = document.getElementById('intent-badge');
+  const fileInfo = document.getElementById('topbar-file-info');
+
+  if (name === 'home') {
+    sep.style.display = 'none'; toolName.textContent = '';
+    btnLoad.style.display = 'none'; saveBtn.style.display = 'none';
+    saveInd.style.display = 'none'; intentBadge.style.display = 'none';
+    fileInfo.style.display = 'none';
+  } else if (name === 'editor') {
+    sep.style.display = ''; toolName.textContent = 'Éditeur d\'intentions';
+    btnLoad.style.display = ''; saveBtn.style.display = intent ? '' : 'none';
+    saveInd.style.display = intent ? '' : 'none';
+    intentBadge.style.display = intent ? '' : 'none';
+    fileInfo.style.display = 'none';
+  } else if (name === 'dashboard') {
+    sep.style.display = ''; toolName.textContent = 'Dashboard';
+    btnLoad.style.display = 'none'; saveBtn.style.display = 'none';
+    saveInd.style.display = 'none'; intentBadge.style.display = 'none';
+    fileInfo.style.display = allRows.length ? '' : 'none';
   }
+}
 
-  function readFile(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      // Séparer le parsing du rendu pour avoir des erreurs claires
-      let parsed;
-      try {
-        parsed = JSON.parse(e.target.result);
-      } catch {
-        alert('Fichier JSON invalide — impossible de lire le contenu.');
-        return;
-      }
-      intent = parsed;
-      modified = false;
-      renderAll();
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('editor').style.display = 'block';
-      document.getElementById('save-btn').style.display = '';
-      document.getElementById('intent-badge').style.display = '';
-      document.getElementById('save-indicator').style.display = '';
-      updateSaveIndicator();
-    };
-    reader.readAsText(file);
-  }
+// ══════════════════════════════════════════════════════════════
+// SHARED UTILS
+// ══════════════════════════════════════════════════════════════
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
-  // ── SAVE ───────────────────────────────────────────────
-  function saveFile() {
-    collectAll();
-    const json = JSON.stringify(intent, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (intent.intent_type || 'intention') + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
+// ══════════════════════════════════════════════════════════════
+// INTENT EDITOR
+// ══════════════════════════════════════════════════════════════
+let intent = null;
+let modified = false;
+
+const editorDropZone = document.getElementById('editor-drop-zone');
+editorDropZone.addEventListener('dragover', e => { e.preventDefault(); editorDropZone.classList.add('drag-over'); });
+editorDropZone.addEventListener('dragleave', () => editorDropZone.classList.remove('drag-over'));
+editorDropZone.addEventListener('drop', e => { e.preventDefault(); editorDropZone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (file) readFile(file);
+  e.target.value = '';
+}
+
+function readFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    let parsed;
+    try { parsed = JSON.parse(e.target.result); }
+    catch { alert('Fichier JSON invalide — impossible de lire le contenu.'); return; }
+    intent = parsed;
     modified = false;
+    renderAll();
+    document.getElementById('editor-empty-state').style.display = 'none';
+    document.getElementById('editor-content').style.display = '';
+    document.getElementById('save-btn').style.display = '';
+    document.getElementById('intent-badge').style.display = '';
+    document.getElementById('save-indicator').style.display = '';
     updateSaveIndicator();
-  }
+  };
+  reader.readAsText(file);
+}
 
-  function markModified() {
-    modified = true;
-    updateSaveIndicator();
-    renderVerification(); // léger, juste du texte
-  }
+function saveFile() {
+  collectAll();
+  const blob = new Blob([JSON.stringify(intent, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = (intent.intent_type || 'intention') + '.json'; a.click();
+  URL.revokeObjectURL(url);
+  modified = false; updateSaveIndicator();
+}
 
-  function markModifiedWithSlots() {
-    // À appeler quand les outlines changent — refresh badges + vérification
-    markModified();
-    renderSlots();
-  }
+function markModified() { modified = true; updateSaveIndicator(); renderVerification(); }
+function markModifiedWithSlots() { markModified(); renderSlots(); }
 
-  function updateSaveIndicator() {
-    const el = document.getElementById('save-indicator');
-    el.textContent = modified ? '● modifications non sauvegardées' : '✓ à jour';
-    el.className = 'save-indicator' + (modified ? ' modified' : '');
-  }
+function updateSaveIndicator() {
+  const el = document.getElementById('save-indicator');
+  el.textContent = modified ? '● modifications non sauvegardées' : '✓ à jour';
+  el.className = 'save-indicator' + (modified ? ' modified' : '');
+}
 
-  // ── SECTION TOGGLE ──────────────────────────────────────
-  function toggleSection(id) {
-    document.getElementById(id).classList.toggle('collapsed');
-  }
+function toggleSection(id) { document.getElementById(id).classList.toggle('collapsed'); }
 
-  // ── SLOT / OUTLINE CROSS-REFERENCE ────────────────────
-  function getVariablesUsedInOutlines() {
-    const vars = new Set();
-    (intent.scenarios || []).forEach(sc => {
-      (sc.actions || []).forEach(action => {
-        (action.email_outline || []).forEach(point => {
-          const matches = [...String(point).matchAll(/\[([A-Z][A-Z0-9_]*)\]/g)];
-          matches.forEach(m => vars.add(m[1]));
-        });
+function getVariablesUsedInOutlines() {
+  const vars = new Set();
+  (intent.scenarios || []).forEach(sc => {
+    (sc.actions || []).forEach(action => {
+      (action.email_outline || []).forEach(pt => {
+        [...String(pt).matchAll(/\[([A-Z][A-Z0-9_]*)\]/g)].forEach(m => vars.add(m[1]));
       });
     });
-    return vars;
+  });
+  return vars;
+}
+
+function renderVerification() {
+  const panel = document.getElementById('verify-panel');
+  if (!panel || !intent) return;
+  const declared = new Set(intent.slots_needed || []);
+  const usedInEmails = getVariablesUsedInOutlines();
+  const undeclared = [...usedInEmails].filter(v => !declared.has(v));
+  const unused = [...declared].filter(v => !usedInEmails.has(v));
+  if (undeclared.length === 0 && unused.length === 0) {
+    panel.innerHTML = `<div class="verify-ok">✓ Tous les slots déclarés sont utilisés dans les emails et toutes les variables des emails sont déclarées.</div>`;
+    return;
   }
-
-  function renderVerification() {
-    const panel = document.getElementById('verify-panel');
-    if (!panel || !intent) return;
-
-    const declared = new Set(intent.slots_needed || []);
-    const usedInEmails = getVariablesUsedInOutlines();
-
-    const undeclared = [...usedInEmails].filter(v => !declared.has(v));
-    const unused     = [...declared].filter(v => !usedInEmails.has(v));
-
-    if (undeclared.length === 0 && unused.length === 0) {
-      panel.innerHTML = `<div class="verify-ok">✓ Tous les slots déclarés sont utilisés dans les emails et toutes les variables des emails sont déclarées.</div>`;
-      return;
-    }
-
-    let html = '<div class="verify-issues">';
-    if (undeclared.length > 0) {
-      html += `<div class="verify-issue">
-        <div class="issue-title">⚠️ Variable(s) utilisée(s) dans les emails mais absente(s) des slots déclarés</div>
-        <p style="margin-bottom:6px;font-size:12px">L'IA ne calculera pas ces valeurs — elles resteront vides dans l'email généré.</p>
-        <ul class="issue-list">${undeclared.map(v => `<li>[${v}]</li>`).join('')}</ul>
-      </div>`;
-    }
-    if (unused.length > 0) {
-      html += `<div class="verify-issue">
-        <div class="issue-title">⚠️ Slot(s) déclaré(s) mais jamais utilisé(s) dans les emails</div>
-        <p style="margin-bottom:6px;font-size:12px">Ces slots seront calculés par l'IA mais n'apparaissent dans aucun point d'email.</p>
-        <ul class="issue-list">${unused.map(v => `<li>${v}</li>`).join('')}</ul>
-      </div>`;
-    }
-    html += '</div>';
-    panel.innerHTML = html;
+  let html = '<div class="verify-issues">';
+  if (undeclared.length > 0) {
+    html += `<div class="verify-issue"><div class="issue-title">⚠️ Variable(s) utilisée(s) dans les emails mais absente(s) des slots déclarés</div>
+      <p style="margin-bottom:6px;font-size:12px">L'IA ne calculera pas ces valeurs — elles resteront vides dans l'email généré.</p>
+      <ul class="issue-list">${undeclared.map(v => `<li>[${v}]</li>`).join('')}</ul></div>`;
   }
+  if (unused.length > 0) {
+    html += `<div class="verify-issue"><div class="issue-title">⚠️ Slot(s) déclaré(s) mais jamais utilisé(s) dans les emails</div>
+      <p style="margin-bottom:6px;font-size:12px">Ces slots seront calculés par l'IA mais n'apparaissent dans aucun point d'email.</p>
+      <ul class="issue-list">${unused.map(v => `<li>${v}</li>`).join('')}</ul></div>`;
+  }
+  panel.innerHTML = html + '</div>';
+}
 
-  // ── CHIPS (tags, keywords, slots, special) ─────────────
-  function renderChips(containerId, values, onRemove, onAdd) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    values.forEach((val, i) => {
-      const chip = document.createElement('span');
-      chip.className = 'chip';
-      chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('${containerId}',${i})" title="Supprimer">×</span>`;
-      container.appendChild(chip);
-    });
-    const input = document.createElement('input');
-    input.className = 'chip-input';
-    input.placeholder = 'Ajouter…';
-    input.dataset.container = containerId;
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        const val = input.value.trim().replace(/,$/, '');
-        if (val) { onAdd(val); input.value = ''; }
-      }
-      if (e.key === 'Backspace' && !input.value && values.length) {
-        onRemove(values.length - 1);
-      }
-    });
-    input.addEventListener('blur', () => {
-      const val = input.value.trim();
+function renderChips(containerId, values, onRemove, onAdd) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  values.forEach((val, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('${containerId}',${i})">×</span>`;
+    container.appendChild(chip);
+  });
+  const input = document.createElement('input');
+  input.className = 'chip-input'; input.placeholder = 'Ajouter…';
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault(); const val = input.value.trim().replace(/,$/, '');
       if (val) { onAdd(val); input.value = ''; }
-    });
-    container.appendChild(input);
-  }
+    }
+    if (e.key === 'Backspace' && !input.value && values.length) { onRemove(values.length - 1); }
+  });
+  input.addEventListener('blur', () => { const val = input.value.trim(); if (val) { onAdd(val); input.value = ''; } });
+  container.appendChild(input);
+}
 
-  // Chip remove dispatcher
-  function onChipRemove(containerId, index) {
-    if (containerId === 'tags-container') { intent.tags.splice(index, 1); renderTags(); }
-    else if (containerId === 'keywords-container') { intent.examples.keywords.splice(index, 1); renderKeywords(); }
-    else if (containerId === 'slots-container') { intent.slots_needed.splice(index, 1); renderSlots(); }
-    else if (containerId === 'special-container') { intent.special_values.splice(index, 1); renderSpecial(); }
-    markModified();
-  }
+function onChipRemove(containerId, index) {
+  if (containerId === 'tags-container') { intent.tags.splice(index, 1); renderTags(); }
+  else if (containerId === 'keywords-container') { intent.examples.keywords.splice(index, 1); renderKeywords(); }
+  else if (containerId === 'slots-container') { intent.slots_needed.splice(index, 1); renderSlots(); }
+  markModified();
+}
 
-  function renderTags() {
-    renderChips('tags-container', intent.tags,
-      i => { intent.tags.splice(i,1); renderTags(); markModified(); },
-      v => { intent.tags.push(v); renderTags(); markModified(); });
-  }
-  function renderKeywords() {
-    renderChips('keywords-container', intent.examples.keywords,
-      i => { intent.examples.keywords.splice(i,1); renderKeywords(); markModified(); },
-      v => { intent.examples.keywords.push(v); renderKeywords(); markModified(); });
-  }
-  function renderSlots() {
-    const used = getVariablesUsedInOutlines();
-    const container = document.getElementById('slots-container');
-    container.innerHTML = '';
-    intent.slots_needed.forEach((val, i) => {
-      const isUsed = used.has(val);
-      const chip = document.createElement('span');
-      chip.className = 'chip ' + (isUsed ? 'slot-used' : 'slot-unused');
-      chip.title = isUsed ? 'Utilisé dans au moins un email ✓' : 'Non utilisé dans aucun email ⚠️';
-      chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('slots-container',${i})" title="Supprimer">×</span>`;
-      container.appendChild(chip);
-    });
-    const input = document.createElement('input');
-    input.className = 'chip-input';
-    input.placeholder = 'Ajouter…';
-    input.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        const val = input.value.trim().replace(/,$/, '');
-        if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; }
-      }
-      if (e.key === 'Backspace' && !input.value && intent.slots_needed.length) {
-        intent.slots_needed.splice(intent.slots_needed.length - 1, 1);
-        renderSlots(); renderVerification(); markModified();
-      }
-    });
-    input.addEventListener('blur', () => {
-      const val = input.value.trim();
-      if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; }
-    });
-    container.appendChild(input);
-  }
-  function renderSpecial() {
-    // champ masqué (special_values non utilisé dans le pipeline) — rien à rendre
-  }
+function renderTags() { renderChips('tags-container', intent.tags, i => { intent.tags.splice(i,1); renderTags(); markModified(); }, v => { intent.tags.push(v); renderTags(); markModified(); }); }
+function renderKeywords() { renderChips('keywords-container', intent.examples.keywords, i => { intent.examples.keywords.splice(i,1); renderKeywords(); markModified(); }, v => { intent.examples.keywords.push(v); renderKeywords(); markModified(); }); }
 
-  // ── PHRASES ────────────────────────────────────────────
-  function renderPhrases() {
-    const list = document.getElementById('phrases-list');
-    list.innerHTML = '';
-    intent.examples.phrases.forEach((phrase, i) => {
-      const row = document.createElement('div');
-      row.className = 'bullet-item';
-      row.innerHTML = `<input type="text" value="${escAttr(phrase)}" oninput="intent.examples.phrases[${i}]=this.value;markModified()" placeholder="Phrase exemple…">
-        <button class="btn-icon danger" onclick="removePhrase(${i})" title="Supprimer">×</button>`;
-      list.appendChild(row);
-    });
-  }
-  function addPhrase() {
-    intent.examples.phrases.push('');
-    renderPhrases();
-    markModified();
-    const inputs = document.querySelectorAll('#phrases-list input');
-    inputs[inputs.length - 1]?.focus();
-  }
-  function removePhrase(i) {
-    intent.examples.phrases.splice(i, 1);
-    renderPhrases();
-    markModified();
-  }
+function renderSlots() {
+  const used = getVariablesUsedInOutlines();
+  const container = document.getElementById('slots-container');
+  container.innerHTML = '';
+  intent.slots_needed.forEach((val, i) => {
+    const isUsed = used.has(val);
+    const chip = document.createElement('span');
+    chip.className = 'chip ' + (isUsed ? 'slot-used' : 'slot-unused');
+    chip.title = isUsed ? 'Utilisé dans au moins un email ✓' : 'Non utilisé dans aucun email ⚠️';
+    chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('slots-container',${i})">×</span>`;
+    container.appendChild(chip);
+  });
+  const input = document.createElement('input');
+  input.className = 'chip-input'; input.placeholder = 'Ajouter…';
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); const val = input.value.trim().replace(/,$/, ''); if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; } }
+    if (e.key === 'Backspace' && !input.value && intent.slots_needed.length) { intent.slots_needed.splice(intent.slots_needed.length - 1, 1); renderSlots(); renderVerification(); markModified(); }
+  });
+  input.addEventListener('blur', () => { const val = input.value.trim(); if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; } });
+  container.appendChild(input);
+}
 
-  // ── SCENARIOS ──────────────────────────────────────────
-  function renderScenarios() {
-    const list = document.getElementById('scenarios-list');
-    list.innerHTML = '';
-    intent.scenarios.forEach((sc, si) => {
-      const card = document.createElement('div');
-      card.className = 'scenario-card';
-      card.id = `scenario-${si}`;
-      const tip = (text) => `<span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">${text}</span></span>`;
-      card.innerHTML = `
-        <div class="scenario-header">
-          <span class="scenario-number">${si + 1}</span>
-          <span class="scenario-name-preview">${escHtml(sc.name || 'Nouveau scénario')}</span>
-          <button class="btn-icon" onclick="moveScenario(${si},-1)" title="Monter" ${si===0?'disabled':''}>↑</button>
-          <button class="btn-icon" onclick="moveScenario(${si},1)" title="Descendre" ${si===intent.scenarios.length-1?'disabled':''}>↓</button>
-          <button class="btn-danger" onclick="removeScenario(${si})">Supprimer</button>
+function renderPhrases() {
+  const list = document.getElementById('phrases-list'); list.innerHTML = '';
+  intent.examples.phrases.forEach((phrase, i) => {
+    const row = document.createElement('div'); row.className = 'bullet-item';
+    row.innerHTML = `<input type="text" value="${escAttr(phrase)}" oninput="intent.examples.phrases[${i}]=this.value;markModified()" placeholder="Phrase exemple…">
+      <button class="btn-icon danger" onclick="removePhrase(${i})">×</button>`;
+    list.appendChild(row);
+  });
+}
+function addPhrase() { intent.examples.phrases.push(''); renderPhrases(); markModified(); const inputs = document.querySelectorAll('#phrases-list input'); inputs[inputs.length-1]?.focus(); }
+function removePhrase(i) { intent.examples.phrases.splice(i, 1); renderPhrases(); markModified(); }
+
+function renderScenarios() {
+  const list = document.getElementById('scenarios-list'); list.innerHTML = '';
+  intent.scenarios.forEach((sc, si) => {
+    const card = document.createElement('div'); card.className = 'scenario-card'; card.id = `scenario-${si}`;
+    const tip = t => `<span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">${t}</span></span>`;
+    card.innerHTML = `
+      <div class="scenario-header">
+        <span class="scenario-number">${si+1}</span>
+        <span class="scenario-name-preview">${escHtml(sc.name || 'Nouveau scénario')}</span>
+        <button class="btn-icon" onclick="moveScenario(${si},-1)" ${si===0?'disabled':''}>↑</button>
+        <button class="btn-icon" onclick="moveScenario(${si},1)" ${si===intent.scenarios.length-1?'disabled':''}>↓</button>
+        <button class="btn btn-danger-soft" onclick="removeScenario(${si})">Supprimer</button>
+      </div>
+      <div class="scenario-body">
+        <div class="row-2">
+          <div class="field"><div class="label-row"><label>Nom du scénario</label>${tip('Nom lisible affiché dans les rapports et les logs.')}</div>
+            <input type="text" value="${escAttr(sc.name)}" oninput="intent.scenarios[${si}].name=this.value;updateScenarioPreview(${si},this.value);markModified()"></div>
+          <div class="field"><div class="label-row"><label>Clé (identifiant technique)</label>${tip('Identifiant unique, en minuscules avec des underscores. Référencé dans les règles de sélection.')}</div>
+            <input type="text" value="${escAttr(sc.key)}" oninput="intent.scenarios[${si}].key=this.value;markModified()"></div>
         </div>
-        <div class="scenario-body">
-          <div class="row-2">
-            <div class="field">
-              <div class="label-row"><label>Nom du scénario</label>${tip("Nom lisible affiché dans les rapports et les logs. Court et descriptif. Ex : «\u00a0Menus déjà disponibles dans le devis\u00a0».")}</div>
-              <input type="text" value="${escAttr(sc.name)}" oninput="intent.scenarios[${si}].name=this.value;updateScenarioPreview(${si},this.value);markModified()" placeholder="Ex: Menus disponibles dans le devis">
-            </div>
-            <div class="field">
-              <div class="label-row"><label>Clé (identifiant technique)</label>${tip("Identifiant unique de ce scénario, en minuscules avec des underscores. Référencé dans les règles de sélection. Ne pas changer après mise en production sauf si vous mettez à jour les règles en même temps.")}</div>
-              <input type="text" value="${escAttr(sc.key)}" oninput="intent.scenarios[${si}].key=this.value;markModified()" placeholder="Ex: menus_already_in_quote">
-            </div>
-          </div>
-          <div class="field">
-            <div class="label-row"><label>Quand l'appliquer</label>${tip("Décrit précisément les conditions (données du dossier, contexte de l'email) qui rendent ce scénario applicable. L'IA compare ces conditions aux données réelles pour choisir le bon scénario.")}</div>
-            <textarea oninput="intent.scenarios[${si}].applicable_when=this.value;markModified()" placeholder="Ex: Les menus sont déjà présents dans le devis et accessibles via le lien.">${escHtml(sc.applicable_when)}</textarea>
-          </div>
-          <div class="field">
-            <div class="label-row"><label>Message clé</label>${tip("L'objectif principal que la réponse doit atteindre. L'IA s'en inspire pour orienter le ton et le contenu de l'email. Formulez-le comme une instruction claire : «\u00a0Informer le client que… et l'inviter à…\u00a0».")}</div>
-            <textarea oninput="intent.scenarios[${si}].key_message=this.value;markModified()" placeholder="Ex: Informer le client que les menus sont disponibles sur le devis et l'inviter à préciser ses choix.">${escHtml(sc.key_message)}</textarea>
-          </div>
-          <div class="field">
-            <div class="label-row"><label>Notes pour l'IA</label>${tip("Instructions supplémentaires que l'IA doit suivre dans ce scénario : ton souhaité, priorité (SLA haute/basse), formulations à éviter ou à privilégier, actions internes à déclencher (ex : escalader en interne). Optionnel mais très utile.")}</div>
-            <textarea oninput="intent.scenarios[${si}].notes=this.value;markModified()" placeholder="Ex: Ton clair et direct. Fournir le lien vers le devis. Scénario par défaut en cas de doute — toujours en dernière position.">${escHtml(sc.notes || '')}</textarea>
-          </div>
-          <hr class="divider">
-          <div class="label-row"><label>Emails à générer</label>${tip("Liste des emails que l'IA doit rédiger pour ce scénario. Chaque email cible soit le client (l'organisateur), soit le prestataire (hôtel, traiteur…). Un scénario peut générer plusieurs emails simultanément.")}</div>
-          <div id="actions-${si}" style="margin-top:8px"></div>
-          <button class="btn-add mt-8" onclick="addAction(${si})">+ Ajouter un email</button>
-        </div>`;
-      list.appendChild(card);
-      renderActions(si);
-    });
-  }
-
-  function updateScenarioPreview(si, val) {
-    const el = document.querySelector(`#scenario-${si} .scenario-name-preview`);
-    if (el) el.textContent = val || 'Nouveau scénario';
-  }
-
-  function addScenario() {
-    intent.scenarios.push({
-      key: '', name: '', applicable_when: '', key_message: '',
-      actions: [{ type: 'draft_email', recipient: 'client', email_outline: [''] }],
-      notes: ''
-    });
-    renderScenarios();
-    markModified();
-    document.getElementById(`scenario-${intent.scenarios.length - 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function removeScenario(si) {
-    if (!confirm(`Supprimer le scénario "${intent.scenarios[si].name || si + 1}" ?`)) return;
-    intent.scenarios.splice(si, 1);
-    renderScenarios();
-    markModified();
-  }
-
-  function moveScenario(si, dir) {
-    const target = si + dir;
-    if (target < 0 || target >= intent.scenarios.length) return;
-    [intent.scenarios[si], intent.scenarios[target]] = [intent.scenarios[target], intent.scenarios[si]];
-    renderScenarios();
-    markModified();
-  }
-
-  // ── ACTIONS (email drafts within scenarios) ────────────
-  function renderActions(si) {
-    const container = document.getElementById(`actions-${si}`);
-    if (!container) return;
-    container.innerHTML = '';
-    const actions = intent.scenarios[si].actions || [];
-    actions.forEach((action, ai) => {
-      const card = document.createElement('div');
-      card.className = 'action-card';
-      const recipientBadgeClass = action.recipient === 'client' ? 'client' : 'presta';
-      const recipientLabel = action.recipient === 'client' ? 'Client' : 'Prestataire';
-      card.innerHTML = `
-        <div class="action-header">
-          <span class="recipient-badge ${recipientBadgeClass}">${recipientLabel}</span>
-          <select class="recipient-select" onchange="intent.scenarios[${si}].actions[${ai}].recipient=this.value;renderActions(${si});markModified()">
-            <option value="client" ${action.recipient==='client'?'selected':''}>→ Client</option>
-            <option value="presta" ${action.recipient==='presta'?'selected':''}>→ Prestataire</option>
-          </select>
-          <span style="flex:1"></span>
-          <button class="btn-danger" onclick="removeAction(${si},${ai})">Supprimer</button>
-        </div>
-        <div class="action-body">
-          <div class="label-row">
-            <label>Points de l'email</label>
-            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Les points que l'email doit couvrir, dans l'ordre. L'IA rédige l'email en développant chacun de ces points. Soyez précis sur ce que chaque point doit contenir — plus c'est détaillé, meilleure est la rédaction. Vous pouvez utiliser [NOM_VARIABLE] pour indiquer où insérer des données du dossier.</span></span>
-          </div>
-          <div id="outline-${si}-${ai}" class="bullet-list" style="margin-top:6px"></div>
-          <button class="btn-add mt-8" onclick="addOutlinePoint(${si},${ai})">+ Ajouter un point</button>
-        </div>`;
-      container.appendChild(card);
-      renderOutline(si, ai);
-    });
-  }
-
-  function addAction(si) {
-    if (!intent.scenarios[si].actions) intent.scenarios[si].actions = [];
-    intent.scenarios[si].actions.push({ type: 'draft_email', recipient: 'client', email_outline: [''] });
+        <div class="field"><div class="label-row"><label>Quand l'appliquer</label>${tip('Décrit les conditions qui rendent ce scénario applicable.')}</div>
+          <textarea oninput="intent.scenarios[${si}].applicable_when=this.value;markModified()">${escHtml(sc.applicable_when)}</textarea></div>
+        <div class="field"><div class="label-row"><label>Message clé</label>${tip('L\'objectif principal que la réponse doit atteindre.')}</div>
+          <textarea oninput="intent.scenarios[${si}].key_message=this.value;markModified()">${escHtml(sc.key_message)}</textarea></div>
+        <div class="field"><div class="label-row"><label>Notes pour l'IA</label>${tip('Instructions supplémentaires : ton, priorité SLA, formulations à éviter, actions internes à déclencher.')}</div>
+          <textarea oninput="intent.scenarios[${si}].notes=this.value;markModified()">${escHtml(sc.notes||'')}</textarea></div>
+        <hr class="divider">
+        <div class="label-row"><label>Emails à générer</label>${tip('Emails que l\'IA doit rédiger pour ce scénario. Chaque email cible le client ou le prestataire.')}</div>
+        <div id="actions-${si}" style="margin-top:8px"></div>
+        <button class="btn btn-add mt-8" onclick="addAction(${si})">+ Ajouter un email</button>
+      </div>`;
+    list.appendChild(card);
     renderActions(si);
-    markModified();
-  }
+  });
+}
 
-  function removeAction(si, ai) {
-    intent.scenarios[si].actions.splice(ai, 1);
-    renderActions(si);
-    markModified();
-  }
+function updateScenarioPreview(si, val) { const el = document.querySelector(`#scenario-${si} .scenario-name-preview`); if (el) el.textContent = val || 'Nouveau scénario'; }
+function addScenario() { intent.scenarios.push({ key:'', name:'', applicable_when:'', key_message:'', actions:[{ type:'draft_email', recipient:'client', email_outline:[''] }], notes:'' }); renderScenarios(); markModified(); document.getElementById(`scenario-${intent.scenarios.length-1}`)?.scrollIntoView({ behavior:'smooth', block:'start' }); }
+function removeScenario(si) { if (!confirm(`Supprimer le scénario "${intent.scenarios[si].name || si+1}" ?`)) return; intent.scenarios.splice(si,1); renderScenarios(); markModified(); }
+function moveScenario(si, dir) { const t = si+dir; if (t<0||t>=intent.scenarios.length) return; [intent.scenarios[si],intent.scenarios[t]]=[intent.scenarios[t],intent.scenarios[si]]; renderScenarios(); markModified(); }
 
-  // ── EMAIL OUTLINE ──────────────────────────────────────
-  function renderOutline(si, ai) {
-    const container = document.getElementById(`outline-${si}-${ai}`);
-    if (!container) return;
-    container.innerHTML = '';
-    const points = intent.scenarios[si].actions[ai].email_outline || [];
-    points.forEach((pt, pi) => {
-      const row = document.createElement('div');
-      row.className = 'bullet-item';
-      row.innerHTML = `<input type="text" value="${escAttr(pt)}" oninput="intent.scenarios[${si}].actions[${ai}].email_outline[${pi}]=this.value;markModifiedWithSlots()" placeholder="Point de l'email…">
-        <button class="btn-icon danger" onclick="removeOutlinePoint(${si},${ai},${pi})" title="Supprimer">×</button>`;
-      container.appendChild(row);
-    });
-  }
-
-  function addOutlinePoint(si, ai) {
-    intent.scenarios[si].actions[ai].email_outline.push('');
+function renderActions(si) {
+  const container = document.getElementById(`actions-${si}`); if (!container) return;
+  container.innerHTML = '';
+  (intent.scenarios[si].actions || []).forEach((action, ai) => {
+    const card = document.createElement('div'); card.className = 'action-card';
+    const rc = action.recipient === 'client' ? 'client' : 'presta';
+    const rl = action.recipient === 'client' ? 'Client' : 'Prestataire';
+    card.innerHTML = `
+      <div class="action-header">
+        <span class="recipient-badge ${rc}">${rl}</span>
+        <select class="recipient-select" onchange="intent.scenarios[${si}].actions[${ai}].recipient=this.value;renderActions(${si});markModified()">
+          <option value="client" ${action.recipient==='client'?'selected':''}>→ Client</option>
+          <option value="presta" ${action.recipient==='presta'?'selected':''}>→ Prestataire</option>
+        </select>
+        <span style="flex:1"></span>
+        <button class="btn btn-danger-soft" onclick="removeAction(${si},${ai})">Supprimer</button>
+      </div>
+      <div class="action-body">
+        <div class="label-row"><label>Points de l'email</label>
+          <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Les points que l'email doit couvrir. L'IA rédige l'email en développant chacun. Utilisez [NOM_VARIABLE] pour insérer des données du dossier.</span></span></div>
+        <div id="outline-${si}-${ai}" class="bullet-list" style="margin-top:6px"></div>
+        <button class="btn btn-add mt-8" onclick="addOutlinePoint(${si},${ai})">+ Ajouter un point</button>
+      </div>`;
+    container.appendChild(card);
     renderOutline(si, ai);
-    markModifiedWithSlots();
-    const inputs = document.querySelectorAll(`#outline-${si}-${ai} input`);
-    inputs[inputs.length - 1]?.focus();
-  }
+  });
+}
+function addAction(si) { if (!intent.scenarios[si].actions) intent.scenarios[si].actions=[]; intent.scenarios[si].actions.push({ type:'draft_email', recipient:'client', email_outline:[''] }); renderActions(si); markModified(); }
+function removeAction(si, ai) { intent.scenarios[si].actions.splice(ai,1); renderActions(si); markModified(); }
 
-  function removeOutlinePoint(si, ai, pi) {
-    intent.scenarios[si].actions[ai].email_outline.splice(pi, 1);
-    renderOutline(si, ai);
-    markModifiedWithSlots();
-  }
+function renderOutline(si, ai) {
+  const container = document.getElementById(`outline-${si}-${ai}`); if (!container) return;
+  container.innerHTML = '';
+  (intent.scenarios[si].actions[ai].email_outline || []).forEach((pt, pi) => {
+    const row = document.createElement('div'); row.className = 'bullet-item';
+    row.innerHTML = `<input type="text" value="${escAttr(pt)}" oninput="intent.scenarios[${si}].actions[${ai}].email_outline[${pi}]=this.value;markModifiedWithSlots()" placeholder="Point de l'email…">
+      <button class="btn-icon danger" onclick="removeOutlinePoint(${si},${ai},${pi})">×</button>`;
+    container.appendChild(row);
+  });
+}
+function addOutlinePoint(si, ai) { intent.scenarios[si].actions[ai].email_outline.push(''); renderOutline(si,ai); markModifiedWithSlots(); const inputs = document.querySelectorAll(`#outline-${si}-${ai} input`); inputs[inputs.length-1]?.focus(); }
+function removeOutlinePoint(si, ai, pi) { intent.scenarios[si].actions[ai].email_outline.splice(pi,1); renderOutline(si,ai); markModifiedWithSlots(); }
 
-  // ── RESEARCH AREAS ─────────────────────────────────────
-  function renderResearch() {
-    const tbody = document.getElementById('research-list');
-    tbody.innerHTML = '';
-    (intent.area_of_research || []).forEach((item, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="col-name"><input type="text" value="${escAttr(item.name)}" oninput="intent.area_of_research[${i}].name=this.value;markModified()" placeholder="supplier_proposals[].name"></td>
-        <td><input type="text" value="${escAttr(item.notes)}" oninput="intent.area_of_research[${i}].notes=this.value;markModified()" placeholder="Description…"></td>
-        <td><button class="btn-icon danger" onclick="removeResearch(${i})">×</button></td>`;
-      tbody.appendChild(tr);
-    });
-  }
+function renderResearch() {
+  const tbody = document.getElementById('research-list'); tbody.innerHTML = '';
+  (intent.area_of_research || []).forEach((item, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="col-name"><input type="text" value="${escAttr(item.name)}" oninput="intent.area_of_research[${i}].name=this.value;markModified()" placeholder="supplier_proposals[].name"></td>
+      <td><input type="text" value="${escAttr(item.notes)}" oninput="intent.area_of_research[${i}].notes=this.value;markModified()" placeholder="Description…"></td>
+      <td><button class="btn-icon danger" onclick="removeResearch(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function addResearch() { if (!intent.area_of_research) intent.area_of_research=[]; intent.area_of_research.push({ name:'', notes:'' }); renderResearch(); markModified(); const inputs = document.querySelectorAll('#research-list input'); inputs[inputs.length-2]?.focus(); }
+function removeResearch(i) { intent.area_of_research.splice(i,1); renderResearch(); markModified(); }
 
-  function addResearch() {
-    if (!intent.area_of_research) intent.area_of_research = [];
-    intent.area_of_research.push({ name: '', notes: '' });
-    renderResearch();
-    markModified();
-    const inputs = document.querySelectorAll('#research-list input');
-    inputs[inputs.length - 2]?.focus();
-  }
+function renderAll() {
+  document.getElementById('f-intent_type').value = intent.intent_type || '';
+  document.getElementById('f-summary').value = intent.summary || '';
+  document.getElementById('f-rule-client').value = intent.selection_rules?.client || '';
+  document.getElementById('f-rule-presta').value = intent.selection_rules?.presta || '';
+  document.getElementById('intent-badge').textContent = intent.intent_type || '';
+  document.title = (intent.intent_type || 'Intention') + ' — Aleou';
+  renderTags(); renderKeywords(); renderPhrases(); renderScenarios(); renderResearch(); renderSlots(); renderVerification();
+}
 
-  function removeResearch(i) {
-    intent.area_of_research.splice(i, 1);
-    renderResearch();
-    markModified();
-  }
+function collectAll() {
+  intent.intent_type = document.getElementById('f-intent_type').value.trim();
+  intent.summary = document.getElementById('f-summary').value.trim();
+  if (!intent.selection_rules) intent.selection_rules = {};
+  intent.selection_rules.client = document.getElementById('f-rule-client').value.trim();
+  intent.selection_rules.presta = document.getElementById('f-rule-presta').value.trim();
+  if (!intent.special_values) intent.special_values = [];
+  document.getElementById('intent-badge').textContent = intent.intent_type;
+}
 
-  // ── RENDER ALL ─────────────────────────────────────────
-  function renderAll() {
-    document.getElementById('f-intent_type').value = intent.intent_type || '';
-    document.getElementById('f-summary').value = intent.summary || '';
-    document.getElementById('f-rule-client').value = intent.selection_rules?.client || '';
-    document.getElementById('f-rule-presta').value = intent.selection_rules?.presta || '';
-    document.getElementById('intent-badge').textContent = intent.intent_type || '';
-    document.title = (intent.intent_type || 'Intention') + ' — Aleou';
-    renderTags();
-    renderKeywords();
-    renderPhrases();
-    renderScenarios();
-    renderResearch();
-    renderSlots();
-    renderSpecial();
-    renderVerification();
-  }
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+let allRows = [];
+let filteredRows = [];
+let sortKey = '';
+let sortAsc = true;
 
-  // ── COLLECT ALL (before save) ──────────────────────────
-  function collectAll() {
-    intent.intent_type = document.getElementById('f-intent_type').value.trim();
-    intent.summary = document.getElementById('f-summary').value.trim();
-    if (!intent.selection_rules) intent.selection_rules = {};
-    intent.selection_rules.client = document.getElementById('f-rule-client').value.trim();
-    intent.selection_rules.presta = document.getElementById('f-rule-presta').value.trim();
-    if (!intent.special_values) intent.special_values = []; // champ non utilisé, conservé vide pour compatibilité
-    document.getElementById('intent-badge').textContent = intent.intent_type;
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  if (lines.length < 2) return [];
+  function splitLine(line) {
+    const result = []; let cur = ''; let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (inQuotes && line[i+1]==='"') { cur+='"'; i++; } else inQuotes=!inQuotes; }
+      else if (ch === ',' && !inQuotes) { result.push(cur); cur=''; }
+      else { cur+=ch; }
+    }
+    result.push(cur); return result;
   }
+  const headers = splitLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = splitLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h.trim()] = (vals[idx]||'').trim(); });
+    rows.push(obj);
+  }
+  return rows;
+}
 
-  // ── UTILS ──────────────────────────────────────────────
-  function escHtml(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function escAttr(s) {
-    return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
+function loadCSV(file) {
+  if (!file || !file.name.endsWith('.csv')) { alert('Veuillez sélectionner un fichier .csv'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      allRows = parseCSV(e.target.result);
+      if (!allRows.length) { alert('Fichier vide ou format invalide.'); return; }
+      document.getElementById('dash-file-name').textContent = file.name;
+      document.getElementById('topbar-file-info').textContent = file.name + ' · ' + allRows.length + ' lignes';
+      document.getElementById('topbar-file-info').style.display = '';
+      document.getElementById('csv-upload-section').style.display = 'none';
+      document.getElementById('dash-content').style.display = '';
+      buildFilters(); computeKPIs(); computeCharts(); applyFilters();
+    } catch(err) { alert('Erreur de lecture : ' + err.message); }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+const csvDropZone = document.getElementById('csv-drop-zone');
+csvDropZone.addEventListener('dragover', e => { e.preventDefault(); csvDropZone.classList.add('drag-over'); });
+csvDropZone.addEventListener('dragleave', () => csvDropZone.classList.remove('drag-over'));
+csvDropZone.addEventListener('drop', e => { e.preventDefault(); csvDropZone.classList.remove('drag-over'); loadCSV(e.dataTransfer.files[0]); });
+document.getElementById('csv-input').addEventListener('change', e => { loadCSV(e.target.files[0]); e.target.value=''; });
+
+function resetDashboard() {
+  allRows = []; filteredRows = [];
+  document.getElementById('dash-content').style.display = 'none';
+  document.getElementById('csv-upload-section').style.display = '';
+  document.getElementById('topbar-file-info').style.display = 'none';
+}
+
+function computeKPIs() {
+  const total = allRows.length;
+  const flagged = allRows.filter(r => (r.Low_Confidence_Flag||'').toUpperCase()==='TRUE').length;
+  const confs = allRows.map(r => parseFloat(r.Match_Confidence)).filter(v => !isNaN(v));
+  const avgConf = confs.length ? confs.reduce((a,b)=>a+b,0)/confs.length : null;
+  const matched = allRows.filter(r => r.Match_Method && r.Match_Method!=='' && r.Match_Method.toLowerCase()!=='none').length;
+  const matchRate = total ? Math.round(matched/total*100) : 0;
+  const flagRate = total ? Math.round(flagged/total*100) : 0;
+  const kpis = [
+    { label:'Total emails', value:total, sub:'lignes dans le fichier', cls:'kpi-primary' },
+    { label:'Taux de match', value:matchRate+'%', sub:matched+' emails matchés', cls:matchRate>=80?'kpi-success':matchRate>=50?'kpi-warning':'kpi-danger' },
+    { label:'Avg Confidence', value:avgConf!==null?avgConf.toFixed(2):'—', sub:'score moyen', cls:avgConf>=0.7?'kpi-success':avgConf>=0.4?'kpi-warning':'kpi-danger' },
+    { label:'Low Confidence', value:flagged, sub:flagRate+'% flaggés', cls:flagged===0?'kpi-success':flagged<total*0.2?'kpi-warning':'kpi-danger' },
+  ];
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+}
+
+const COLORS = ['#4f6af0','#38a169','#d69e2e','#e53e3e','#805ad5','#dd6b20','#319795','#b7791f'];
+function countBy(arr, key) { const map={}; arr.forEach(r => { const v=r[key]||'(vide)'; map[v]=(map[v]||0)+1; }); return Object.entries(map).sort((a,b)=>b[1]-a[1]); }
+function renderBarChart(containerId, entries) {
+  const max = entries[0]?.[1]||1;
+  document.getElementById(containerId).innerHTML = entries.map(([label,count],i) => `<div class="bar-row"><span class="bar-label" title="${label}">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%;background:${COLORS[i%COLORS.length]};"></div></div><span class="bar-count">${count}</span></div>`).join('');
+}
+
+function computeCharts() {
+  renderBarChart('chart-tags', countBy(allRows,'Tag'));
+  renderBarChart('chart-methods', countBy(allRows,'Match_Method'));
+  const buckets = Array(10).fill(0);
+  allRows.forEach(r => { const v=parseFloat(r.Match_Confidence); if (!isNaN(v)) { const idx=Math.min(9,Math.floor(v*10)); buckets[idx]++; } });
+  const maxB = Math.max(...buckets,1);
+  document.getElementById('hist-confidence').innerHTML = buckets.map((count,i) => {
+    const h = Math.round(count/maxB*72);
+    const color = i>=7?'#38a169':i>=4?'#d69e2e':'#e53e3e';
+    return `<div class="hist-col"><div class="hist-bar" style="height:${h}px;background:${color};" title="${count} lignes"></div><span class="hist-label">${(i/10).toFixed(1)}</span></div>`;
+  }).join('');
+}
+
+function buildFilters() {
+  const tags = [...new Set(allRows.map(r=>r.Tag).filter(Boolean))].sort();
+  const methods = [...new Set(allRows.map(r=>r.Match_Method).filter(Boolean))].sort();
+  document.getElementById('filter-tag').innerHTML = '<option value="">Tous les tags</option>' + tags.map(t=>`<option value="${t}">${t}</option>`).join('');
+  document.getElementById('filter-method').innerHTML = '<option value="">Toutes les méthodes</option>' + methods.map(m=>`<option value="${m}">${m}</option>`).join('');
+}
+
+function clearFilters() {
+  document.getElementById('filter-tag').value='';
+  document.getElementById('filter-method').value='';
+  document.getElementById('filter-flag').value='';
+  document.getElementById('filter-search').value='';
+  applyFilters();
+}
+
+function applyFilters() {
+  const tag = document.getElementById('filter-tag').value;
+  const method = document.getElementById('filter-method').value;
+  const flag = document.getElementById('filter-flag').value;
+  const search = document.getElementById('filter-search').value.toLowerCase();
+  filteredRows = allRows.filter(r => {
+    if (tag && r.Tag!==tag) return false;
+    if (method && r.Match_Method!==method) return false;
+    if (flag && (r.Low_Confidence_Flag||'').toUpperCase()!==flag) return false;
+    if (search && !Object.values(r).some(v=>v.toLowerCase().includes(search))) return false;
+    return true;
+  });
+  if (sortKey) doSort();
+  renderTable();
+  document.getElementById('row-count').textContent = filteredRows.length+' / '+allRows.length+' lignes';
+}
+
+function sortBy(key) {
+  if (sortKey===key) sortAsc=!sortAsc; else { sortKey=key; sortAsc=true; }
+  document.querySelectorAll('thead th').forEach(th=>th.classList.remove('sorted'));
+  const keyMap = ['Reference','Subject','Tag','Match_Method','Match_Confidence','Low_Confidence_Flag'];
+  const idx = keyMap.indexOf(key);
+  if (idx>=0) document.querySelectorAll('thead th')[idx].classList.add('sorted');
+  doSort(); renderTable();
+}
+
+function doSort() {
+  filteredRows.sort((a,b) => {
+    let va=a[sortKey]||'', vb=b[sortKey]||'';
+    const na=parseFloat(va), nb=parseFloat(vb);
+    if (!isNaN(na)&&!isNaN(nb)) return sortAsc?na-nb:nb-na;
+    return sortAsc?va.localeCompare(vb,'fr'):vb.localeCompare(va,'fr');
+  });
+}
+
+function confColor(v) { return v>=0.7?'#38a169':v>=0.4?'#d69e2e':'#e53e3e'; }
+function methodBadge(m) {
+  if (!m||m===''||m.toLowerCase()==='none') return `<span class="badge badge-no-match">no match</span>`;
+  if (m.toLowerCase().includes('exact')) return `<span class="badge badge-match">${m}</span>`;
+  if (m.toLowerCase().includes('fuzz')||m.toLowerCase().includes('partial')) return `<span class="badge badge-fuzzy">${m}</span>`;
+  return `<span class="badge" style="background:#e2e8f0;color:#4a5568;">${m}</span>`;
+}
+
+function renderTable() {
+  if (!filteredRows.length) { document.getElementById('table-body').innerHTML=`<tr><td colspan="7" class="no-data">Aucun résultat</td></tr>`; return; }
+  document.getElementById('table-body').innerHTML = filteredRows.map((r,i) => {
+    const conf = parseFloat(r.Match_Confidence);
+    const confDisplay = isNaN(conf) ? '—' : `<div class="confidence-bar"><div class="conf-track"><div class="conf-fill" style="width:${Math.round(conf*100)}%;background:${confColor(conf)};"></div></div><span>${conf.toFixed(2)}</span></div>`;
+    const isFlag = (r.Low_Confidence_Flag||'').toUpperCase()==='TRUE';
+    return `<tr>
+      <td><span class="truncate" style="max-width:120px;">${r.Reference||'—'}</span></td>
+      <td><span class="truncate">${escHtml(r.Subject||'—')}</span></td>
+      <td><span class="badge badge-tag">${r.Tag||'—'}</span></td>
+      <td>${methodBadge(r.Match_Method)}</td>
+      <td>${confDisplay}</td>
+      <td>${isFlag?'<span class="badge badge-flag">⚠ flag</span>':'<span class="badge badge-ok">✓ ok</span>'}</td>
+      <td><button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="openModal(${i})">Voir</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openModal(idx) {
+  const r = filteredRows[idx];
+  document.getElementById('modal-title').textContent = r.Reference || 'Détail';
+  const sections = [
+    { label:'Référence', value:r.Reference },
+    { label:'Sujet', value:r.Subject },
+    { label:'Destinataire', value:r.To },
+    { label:'Tag', value:r.Tag },
+    { label:'Méthode de match', value:r.Match_Method },
+    { label:'Confidence Score', value:r.Match_Confidence },
+    { label:'Low Confidence Flag', value:r.Low_Confidence_Flag },
+    { label:'Email reçu (Input)', value:r.Input_Email, pre:true },
+    { label:'Réponse générée', value:r.Generated_Reply, pre:true },
+    { label:'Réponse réelle envoyée', value:r.User_Reply, pre:true },
+  ];
+  document.getElementById('modal-content').innerHTML = sections.filter(s=>s.value).map(s => `<div class="modal-section"><label>${s.label}</label>${s.pre?`<pre>${escHtml(s.value)}</pre>`:`<div style="font-size:13px;">${escHtml(s.value)}</div>`}</div>`).join('');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target===document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 </script>
 </body>
 </html>
