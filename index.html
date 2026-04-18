@@ -632,9 +632,9 @@ let currentView = 'home';
 
 function showView(name) {
   currentView = name;
-  document.getElementById('view-home').style.display = name === 'home' ? '' : 'none';
-  document.getElementById('view-editor').style.display = name === 'editor' ? '' : 'none';
-  document.getElementById('view-dashboard').style.display = name === 'dashboard' ? '' : 'none';
+  document.getElementById('view-home').style.display = name === 'home' ? 'block' : 'none';
+  document.getElementById('view-editor').style.display = name === 'editor' ? 'block' : 'none';
+  document.getElementById('view-dashboard').style.display = name === 'dashboard' ? 'block' : 'none';
 
   const sep = document.getElementById('topbar-sep');
   const toolName = document.getElementById('topbar-tool-name');
