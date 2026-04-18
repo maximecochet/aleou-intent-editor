@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Éditeur d'intentions — Aleou</title>
+  <style>
+    :root {
+      --blue: #2563EB;
+      --blue-light: #EFF6FF;
+      --blue-border: #BFDBFE;
+      --red: #DC2626;
+      --red-light: #FEF2F2;
+      --green: #16A34A;
+      --green-light: #F0FDF4;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-600: #4B5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 8px;
+      --radius-sm: 4px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── TOP BAR ─────────────────────────────── */
+    #topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    #topbar .logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--blue);
+      margin-right: 8px;
+    }
+    #topbar .intent-badge {
+      background: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid var(--blue-border);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    #topbar .spacer { flex: 1; }
+    #topbar .save-indicator {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+    #topbar .save-indicator.modified { color: var(--red); }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-secondary {
+      background: white;
+      color: var(--gray-700);
+      border: 1px solid var(--gray-200);
+    }
+    .btn-secondary:hover { background: var(--gray-50); }
+    .btn-danger {
+      background: var(--red-light);
+      color: var(--red);
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+    .btn-danger:hover { background: #FEE2E2; }
+    .btn-add {
+      background: var(--gray-50);
+      color: var(--blue);
+      border: 1px dashed var(--blue-border);
+      width: 100%;
+      padding: 8px;
+      font-size: 13px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-add:hover { background: var(--blue-light); }
+    .btn-icon {
+      background: transparent;
+      color: var(--gray-400);
+      padding: 2px 6px;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: var(--radius-sm);
+    }
+    .btn-icon:hover { background: var(--gray-100); color: var(--gray-700); }
+    .btn-icon.danger:hover { background: var(--red-light); color: var(--red); }
+
+    /* ── EMPTY STATE ──────────────────────────── */
+    #empty-state {
+      max-width: 480px;
+      margin: 80px auto;
+      text-align: center;
+    }
+    #drop-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: 12px;
+      padding: 48px 32px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+    #drop-zone .icon { font-size: 40px; margin-bottom: 12px; }
+    #drop-zone h2 { font-size: 16px; color: var(--gray-700); margin-bottom: 6px; }
+    #drop-zone p { font-size: 13px; color: var(--gray-400); }
+    #file-input { display: none; }
+
+    /* ── EDITOR LAYOUT ────────────────────────── */
+    #editor { display: none; max-width: 860px; margin: 0 auto; padding: 28px 24px 80px; }
+
+    .section {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      user-select: none;
+    }
+    .section-header:hover { background: var(--gray-50); }
+    .section-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-700);
+      flex: 1;
+    }
+    .section-icon { font-size: 16px; }
+    .chevron { font-size: 11px; color: var(--gray-400); transition: transform 0.2s; }
+    .section.collapsed .chevron { transform: rotate(-90deg); }
+    .section.collapsed .section-body { display: none; }
+    .section-body { padding: 18px; }
+
+    /* ── FORM FIELDS ──────────────────────────── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    input[type="text"], textarea, select {
+      width: 100%;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--gray-900);
+      background: white;
+      transition: border-color 0.15s;
+      resize: vertical;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    textarea { min-height: 72px; }
+    textarea.tall { min-height: 96px; }
+
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ── TAGS / CHIPS ─────────────────────────── */
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      min-height: 40px;
+      background: white;
+      cursor: text;
+    }
+    .chips-container:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--gray-100);
+      color: var(--gray-700);
+      padding: 2px 8px 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .chip-remove {
+      cursor: pointer;
+      color: var(--gray-400);
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 1px;
+    }
+    .chip-remove:hover { color: var(--red); }
+    .chip-input {
+      border: none;
+      outline: none;
+      font-size: 12px;
+      padding: 2px 4px;
+      min-width: 80px;
+      flex: 1;
+      font-family: inherit;
+      background: transparent;
+    }
+
+    /* ── BULLET LIST ──────────────────────────── */
+    .bullet-list { display: flex; flex-direction: column; gap: 6px; }
+    .bullet-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .bullet-item::before {
+      content: '•';
+      color: var(--gray-400);
+      padding-top: 8px;
+      flex-shrink: 0;
+    }
+    .bullet-item input[type="text"] { flex: 1; }
+
+    /* ── SCENARIOS ────────────────────────────── */
+    .scenario-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .scenario-card:last-of-type { margin-bottom: 0; }
+    .scenario-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .scenario-number {
+      width: 22px; height: 22px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .scenario-name-preview {
+      font-weight: 600;
+      font-size: 13px;
+      flex: 1;
+      color: var(--gray-700);
+    }
+    .scenario-body { padding: 16px; }
+
+    /* ── ACTIONS (email drafts) ───────────────── */
+    .action-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .action-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .recipient-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .recipient-badge.client {
+      background: #ECFDF5;
+      color: #065F46;
+    }
+    .recipient-badge.presta {
+      background: #FFF7ED;
+      color: #9A3412;
+    }
+    .action-body { padding: 12px; }
+
+    select.recipient-select {
+      width: auto;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── ADVANCED ─────────────────────────────── */
+    .research-table { width: 100%; border-collapse: collapse; }
+    .research-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .research-table td { padding: 4px 4px; vertical-align: top; }
+    .research-table tr:not(:last-child) td { border-bottom: 1px solid var(--gray-100); }
+    .research-table input { font-size: 12px; }
+    .research-table .col-name { width: 40%; }
+
+    /* ── MISC ─────────────────────────────────── */
+    .field-hint {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 4px;
+    }
+    .divider { border: none; border-top: 1px solid var(--gray-100); margin: 16px 0; }
+    .flex-row { display: flex; align-items: center; gap: 8px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+
+    /* ── TOOLTIP ───────────────────────────────── */
+    .label-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+    .label-row label { margin-bottom: 0; }
+    .tooltip-wrap { position: relative; display: inline-flex; align-items: center; }
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px; height: 14px;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: default;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .tooltip-box {
+      display: none;
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--gray-900);
+      color: white;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.5;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      width: 280px;
+      z-index: 200;
+      box-shadow: var(--shadow-md);
+      pointer-events: none;
+    }
+    .tooltip-box::before {
+      content: '';
+      position: absolute;
+      left: -5px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-right-color: var(--gray-900);
+      border-left: none;
+    }
+    .tooltip-wrap:hover .tooltip-box { display: block; }
+
+    /* ── SLOT BADGES ───────────────────────────── */
+    .chip.slot-used {
+      background: #DCFCE7;
+      color: #166534;
+    }
+    .chip.slot-unused {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+    .chip.slot-used .chip-remove:hover { color: #166534; }
+    .chip.slot-unused .chip-remove:hover { color: #991B1B; }
+
+    /* ── VERIFICATION PANEL ─────────────────────── */
+    #sec-verify { border-color: transparent; box-shadow: none; background: transparent; }
+    #sec-verify .section-header { background: transparent; border: none; cursor: default; padding: 0 0 10px 0; }
+    #sec-verify .section-header:hover { background: transparent; }
+    #sec-verify .section-body { padding: 0; }
+    .verify-ok {
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .verify-issues { display: flex; flex-direction: column; gap: 8px; }
+    .verify-issue {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #92400E;
+    }
+    .verify-issue .issue-title { font-weight: 600; margin-bottom: 4px; }
+    .verify-issue .issue-list { margin: 0; padding-left: 18px; }
+    .verify-issue .issue-list li { margin-top: 2px; font-family: monospace; font-size: 12px; }
+
+    /* ── GUIDE PANEL ───────────────────────────── */
+    .guide-banner {
+      background: var(--blue-light);
+      border: 1px solid var(--blue-border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--gray-700);
+      line-height: 1.6;
+    }
+    .guide-banner strong { color: var(--blue); }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <span class="logo">Aleou</span>
+  <span id="intent-badge" class="intent-badge" style="display:none"></span>
+  <span class="spacer"></span>
+  <span id="save-indicator" class="save-indicator" style="display:none">● modifications non sauvegardées</span>
+  <button class="btn-secondary" onclick="document.getElementById('file-input').click()">📂 Charger un fichier</button>
+  <button class="btn-primary" id="save-btn" onclick="saveFile()" style="display:none">💾 Télécharger le JSON</button>
+  <input type="file" id="file-input" accept=".json" onchange="handleFileInput(event)">
+</div>
+
+<!-- EMPTY STATE -->
+<div id="empty-state">
+  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="icon">📄</div>
+    <h2>Charger un fichier d'intention</h2>
+    <p>Cliquez ici ou glissez-déposez un fichier .json</p>
+  </div>
+</div>
+
+<!-- EDITOR -->
+<div id="editor">
+
+  <!-- GUIDE -->
+  <div class="guide-banner">
+    <strong>Comment utiliser cet éditeur ?</strong><br>
+    Chaque fichier d'intention décrit un type de demande que l'IA sait gérer (ex : demande de menus, statut des devis…).
+    Pour chaque intention, vous définissez <strong>des scénarios</strong> — c'est-à-dire les différentes situations possibles et les emails que l'IA doit rédiger en réponse.
+    Passez la souris sur le <strong>ⓘ</strong> à côté de chaque champ pour obtenir une explication.
+    Cliquez sur <strong>Télécharger le JSON</strong> quand vous avez terminé, puis déposez le fichier dans Google Drive.
+  </div>
+
+  <!-- INFORMATIONS GÉNÉRALES -->
+  <div class="section" id="sec-general">
+    <div class="section-header" onclick="toggleSection('sec-general')">
+      <span class="section-icon">📋</span>
+      <span class="section-title">Informations générales</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="row-2">
+        <div class="field">
+          <div class="label-row">
+            <label>Type d'intention</label>
+            <span class="tooltip-wrap">
+              <span class="tooltip-icon">i</span>
+              <span class="tooltip-box">Identifiant unique de cette intention. Doit être en MAJUSCULES avec des underscores. Ne pas modifier sauf si vous créez une nouvelle intention depuis zéro — cet identifiant est utilisé par le pipeline pour retrouver le bon fichier.</span>
+            </span>
+          </div>
+          <input type="text" id="f-intent_type" oninput="markModified()" placeholder="Ex: MENU_REQUEST">
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label>Tags</label>
+            <span class="tooltip-wrap">
+              <span class="tooltip-icon">i</span>
+              <span class="tooltip-box">Étiquettes de catégorisation apposées sur l'email traité. Servent à filtrer et analyser les emails dans les rapports. Ex : CLIENT, RESTAURATION, DEVIS. Appuyez sur Entrée pour valider chaque tag.</span>
+            </span>
+          </div>
+          <div class="chips-container" id="tags-container" onclick="this.querySelector('.chip-input').focus()"></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label-row">
+          <label>Résumé</label>
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">i</span>
+            <span class="tooltip-box">Une ou deux phrases qui décrivent en quoi consiste cette intention. L'IA utilise ce résumé pour comprendre le contexte global avant de choisir un scénario. Soyez précis et concis.</span>
+          </span>
+        </div>
+        <textarea id="f-summary" rows="2" oninput="markModified()" placeholder="Ex: Le client demande à recevoir les menus de restauration et les options repas disponibles."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXEMPLES -->
+  <div class="section" id="sec-examples">
+    <div class="section-header" onclick="toggleSection('sec-examples')">
+      <span class="section-icon">💡</span>
+      <span class="section-title">Exemples de classification</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p class="field-hint" style="margin-bottom:14px">Ces exemples servent à entraîner l'IA à reconnaître cette intention dans un email. Plus il y en a, meilleure est la classification.</p>
+      <div class="row-2">
+        <div class="field">
+          <div class="label-row">
+            <label>Mots-clés</label>
+            <span class="tooltip-wrap">
+              <span class="tooltip-icon">i</span>
+              <span class="tooltip-box">Mots ou expressions courts qui, s'ils apparaissent dans un email, suggèrent fortement cette intention. L'IA les utilise comme indices de classification. Appuyez sur Entrée pour valider chaque mot-clé.</span>
+            </span>
+          </div>
+          <div class="chips-container" id="keywords-container" onclick="this.querySelector('.chip-input').focus()"></div>
+          <p class="field-hint">Appuyez sur Entrée pour ajouter</p>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label>Phrases exemples</label>
+            <span class="tooltip-wrap">
+              <span class="tooltip-icon">i</span>
+              <span class="tooltip-box">Exemples de phrases complètes qu'un client ou prestataire pourrait écrire pour exprimer cette intention. Ajoutez-en autant que possible — chaque variante améliore la précision de la classification.</span>
+            </span>
+          </div>
+          <div id="phrases-list" class="bullet-list"></div>
+          <button class="btn-add mt-8" onclick="addPhrase()">+ Ajouter une phrase</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCÉNARIOS -->
+  <div class="section" id="sec-scenarios">
+    <div class="section-header" onclick="toggleSection('sec-scenarios')">
+      <span class="section-icon">🗂️</span>
+      <span class="section-title">Scénarios</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p class="field-hint" style="margin-bottom:14px">Un scénario = une situation particulière et la réponse appropriée. L'IA choisit automatiquement le bon scénario selon les données du dossier. <strong>Le dernier scénario doit toujours être le "Fallback"</strong> (cas non couverts).</p>
+      <div id="scenarios-list"></div>
+      <button class="btn-add mt-12" onclick="addScenario()">+ Ajouter un scénario</button>
+    </div>
+  </div>
+
+  <!-- RÈGLES DE SÉLECTION -->
+  <div class="section" id="sec-rules">
+    <div class="section-header" onclick="toggleSection('sec-rules')">
+      <span class="section-icon">⚖️</span>
+      <span class="section-title">Règles de sélection du scénario</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <p class="field-hint" style="margin-bottom:14px">Ces règles expliquent à l'IA comment choisir le bon scénario selon la situation. Référencez les scénarios par leur <strong>clé</strong> (ex : <code>menus_already_in_quote</code>).</p>
+      <div class="field">
+        <div class="label-row">
+          <label>Règle — email venant du client</label>
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">i</span>
+            <span class="tooltip-box">Décrit la logique de décision lorsque l'email vient de l'organisateur de l'événement (le client). Listez les conditions dans l'ordre de priorité et indiquez la clé du scénario correspondant. Ex : "Si les menus sont dans le devis → menus_already_in_quote. Sinon → fallback."</span>
+          </span>
+        </div>
+        <textarea id="f-rule-client" class="tall" oninput="markModified()" placeholder="Ex: Si les menus sont présents dans le devis → menus_already_in_quote. Si régimes spécifiques mentionnés → specific_dietary_requirements. Sinon → fallback."></textarea>
+      </div>
+      <div class="field">
+        <div class="label-row">
+          <label>Règle — email venant du prestataire</label>
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">i</span>
+            <span class="tooltip-box">Décrit la logique de décision lorsque l'email vient du lieu ou du prestataire (hôtel, traiteur, etc.). Si aucun email prestataire n'est prévu pour cette intention, indiquez-le explicitement.</span>
+          </span>
+        </div>
+        <textarea id="f-rule-presta" class="tall" oninput="markModified()" placeholder="Ex: Si les menus ne sont pas encore fournis → menus_not_yet_provided. Pas d'emails aux prestataires dans les autres scénarios."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVANCÉ -->
+  <div class="section collapsed" id="sec-advanced">
+    <div class="section-header" onclick="toggleSection('sec-advanced')">
+      <span class="section-icon">⚙️</span>
+      <span class="section-title">Paramètres avancés</span>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <div class="label-row">
+          <label>Zones de recherche dans les données du dossier</label>
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">i</span>
+            <span class="tooltip-box">Indique à l'IA quels champs du dossier API elle doit consulter pour appliquer les scénarios. Utilisez la notation pointée : objet.sous_champ (ex: brief.catering, supplier_proposals[].quote_url). Plus c'est précis, meilleure est la réponse.</span>
+          </span>
+        </div>
+        <table class="research-table">
+          <thead>
+            <tr>
+              <th class="col-name">Champ du dossier</th>
+              <th>Pourquoi l'IA en a besoin</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="research-list"></tbody>
+        </table>
+        <button class="btn-add mt-8" onclick="addResearch()">+ Ajouter une zone</button>
+      </div>
+      <hr class="divider">
+      <div class="field">
+        <div class="label-row">
+          <label>Slots nécessaires</label>
+          <span class="tooltip-wrap">
+            <span class="tooltip-icon">i</span>
+            <span class="tooltip-box">Variables que l'IA doit extraire ou calculer à partir du dossier pour construire la réponse. Ces variables sont ensuite injectées dans les emails générés. Ex : NB_DEVIS_RECUS, client_arrival_date, global_comments.</span>
+          </span>
+        </div>
+        <div class="chips-container" id="slots-container" onclick="this.querySelector('.chip-input').focus()"></div>
+        <p class="field-hint">Appuyez sur Entrée pour ajouter. Ces variables apparaissent entre crochets dans les emails : [NOM_VARIABLE].</p>
+      </div>
+      <!-- special_values : champ présent dans le schéma JSON mais jamais lu par le pipeline — masqué intentionnellement -->
+    </div>
+  </div>
+
+  <!-- VÉRIFICATION -->
+  <div class="section" id="sec-verify">
+    <div class="section-header">
+      <span class="section-icon">🔍</span>
+      <span class="section-title">Vérification des slots</span>
+    </div>
+    <div class="section-body">
+      <div id="verify-panel"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let intent = null;
+  let modified = false;
+
+  // ── FILE LOADING ───────────────────────────────────────
+  const dropZone = document.getElementById('drop-zone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) readFile(file);
+  });
+
+  function handleFileInput(e) {
+    const file = e.target.files[0];
+    if (file) readFile(file);
+    e.target.value = '';
+  }
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Séparer le parsing du rendu pour avoir des erreurs claires
+      let parsed;
+      try {
+        parsed = JSON.parse(e.target.result);
+      } catch {
+        alert('Fichier JSON invalide — impossible de lire le contenu.');
+        return;
+      }
+      intent = parsed;
+      modified = false;
+      renderAll();
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('editor').style.display = 'block';
+      document.getElementById('save-btn').style.display = '';
+      document.getElementById('intent-badge').style.display = '';
+      document.getElementById('save-indicator').style.display = '';
+      updateSaveIndicator();
+    };
+    reader.readAsText(file);
+  }
+
+  // ── SAVE ───────────────────────────────────────────────
+  function saveFile() {
+    collectAll();
+    const json = JSON.stringify(intent, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (intent.intent_type || 'intention') + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    modified = false;
+    updateSaveIndicator();
+  }
+
+  function markModified() {
+    modified = true;
+    updateSaveIndicator();
+    renderVerification(); // léger, juste du texte
+  }
+
+  function markModifiedWithSlots() {
+    // À appeler quand les outlines changent — refresh badges + vérification
+    markModified();
+    renderSlots();
+  }
+
+  function updateSaveIndicator() {
+    const el = document.getElementById('save-indicator');
+    el.textContent = modified ? '● modifications non sauvegardées' : '✓ à jour';
+    el.className = 'save-indicator' + (modified ? ' modified' : '');
+  }
+
+  // ── SECTION TOGGLE ──────────────────────────────────────
+  function toggleSection(id) {
+    document.getElementById(id).classList.toggle('collapsed');
+  }
+
+  // ── SLOT / OUTLINE CROSS-REFERENCE ────────────────────
+  function getVariablesUsedInOutlines() {
+    const vars = new Set();
+    (intent.scenarios || []).forEach(sc => {
+      (sc.actions || []).forEach(action => {
+        (action.email_outline || []).forEach(point => {
+          const matches = [...String(point).matchAll(/\[([A-Z][A-Z0-9_]*)\]/g)];
+          matches.forEach(m => vars.add(m[1]));
+        });
+      });
+    });
+    return vars;
+  }
+
+  function renderVerification() {
+    const panel = document.getElementById('verify-panel');
+    if (!panel || !intent) return;
+
+    const declared = new Set(intent.slots_needed || []);
+    const usedInEmails = getVariablesUsedInOutlines();
+
+    const undeclared = [...usedInEmails].filter(v => !declared.has(v));
+    const unused     = [...declared].filter(v => !usedInEmails.has(v));
+
+    if (undeclared.length === 0 && unused.length === 0) {
+      panel.innerHTML = `<div class="verify-ok">✓ Tous les slots déclarés sont utilisés dans les emails et toutes les variables des emails sont déclarées.</div>`;
+      return;
+    }
+
+    let html = '<div class="verify-issues">';
+    if (undeclared.length > 0) {
+      html += `<div class="verify-issue">
+        <div class="issue-title">⚠️ Variable(s) utilisée(s) dans les emails mais absente(s) des slots déclarés</div>
+        <p style="margin-bottom:6px;font-size:12px">L'IA ne calculera pas ces valeurs — elles resteront vides dans l'email généré.</p>
+        <ul class="issue-list">${undeclared.map(v => `<li>[${v}]</li>`).join('')}</ul>
+      </div>`;
+    }
+    if (unused.length > 0) {
+      html += `<div class="verify-issue">
+        <div class="issue-title">⚠️ Slot(s) déclaré(s) mais jamais utilisé(s) dans les emails</div>
+        <p style="margin-bottom:6px;font-size:12px">Ces slots seront calculés par l'IA mais n'apparaissent dans aucun point d'email.</p>
+        <ul class="issue-list">${unused.map(v => `<li>${v}</li>`).join('')}</ul>
+      </div>`;
+    }
+    html += '</div>';
+    panel.innerHTML = html;
+  }
+
+  // ── CHIPS (tags, keywords, slots, special) ─────────────
+  function renderChips(containerId, values, onRemove, onAdd) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    values.forEach((val, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('${containerId}',${i})" title="Supprimer">×</span>`;
+      container.appendChild(chip);
+    });
+    const input = document.createElement('input');
+    input.className = 'chip-input';
+    input.placeholder = 'Ajouter…';
+    input.dataset.container = containerId;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = input.value.trim().replace(/,$/, '');
+        if (val) { onAdd(val); input.value = ''; }
+      }
+      if (e.key === 'Backspace' && !input.value && values.length) {
+        onRemove(values.length - 1);
+      }
+    });
+    input.addEventListener('blur', () => {
+      const val = input.value.trim();
+      if (val) { onAdd(val); input.value = ''; }
+    });
+    container.appendChild(input);
+  }
+
+  // Chip remove dispatcher
+  function onChipRemove(containerId, index) {
+    if (containerId === 'tags-container') { intent.tags.splice(index, 1); renderTags(); }
+    else if (containerId === 'keywords-container') { intent.examples.keywords.splice(index, 1); renderKeywords(); }
+    else if (containerId === 'slots-container') { intent.slots_needed.splice(index, 1); renderSlots(); }
+    else if (containerId === 'special-container') { intent.special_values.splice(index, 1); renderSpecial(); }
+    markModified();
+  }
+
+  function renderTags() {
+    renderChips('tags-container', intent.tags,
+      i => { intent.tags.splice(i,1); renderTags(); markModified(); },
+      v => { intent.tags.push(v); renderTags(); markModified(); });
+  }
+  function renderKeywords() {
+    renderChips('keywords-container', intent.examples.keywords,
+      i => { intent.examples.keywords.splice(i,1); renderKeywords(); markModified(); },
+      v => { intent.examples.keywords.push(v); renderKeywords(); markModified(); });
+  }
+  function renderSlots() {
+    const used = getVariablesUsedInOutlines();
+    const container = document.getElementById('slots-container');
+    container.innerHTML = '';
+    intent.slots_needed.forEach((val, i) => {
+      const isUsed = used.has(val);
+      const chip = document.createElement('span');
+      chip.className = 'chip ' + (isUsed ? 'slot-used' : 'slot-unused');
+      chip.title = isUsed ? 'Utilisé dans au moins un email ✓' : 'Non utilisé dans aucun email ⚠️';
+      chip.innerHTML = `${escHtml(val)}<span class="chip-remove" onclick="onChipRemove('slots-container',${i})" title="Supprimer">×</span>`;
+      container.appendChild(chip);
+    });
+    const input = document.createElement('input');
+    input.className = 'chip-input';
+    input.placeholder = 'Ajouter…';
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = input.value.trim().replace(/,$/, '');
+        if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; }
+      }
+      if (e.key === 'Backspace' && !input.value && intent.slots_needed.length) {
+        intent.slots_needed.splice(intent.slots_needed.length - 1, 1);
+        renderSlots(); renderVerification(); markModified();
+      }
+    });
+    input.addEventListener('blur', () => {
+      const val = input.value.trim();
+      if (val) { intent.slots_needed.push(val); renderSlots(); renderVerification(); markModified(); input.value = ''; }
+    });
+    container.appendChild(input);
+  }
+  function renderSpecial() {
+    // champ masqué (special_values non utilisé dans le pipeline) — rien à rendre
+  }
+
+  // ── PHRASES ────────────────────────────────────────────
+  function renderPhrases() {
+    const list = document.getElementById('phrases-list');
+    list.innerHTML = '';
+    intent.examples.phrases.forEach((phrase, i) => {
+      const row = document.createElement('div');
+      row.className = 'bullet-item';
+      row.innerHTML = `<input type="text" value="${escAttr(phrase)}" oninput="intent.examples.phrases[${i}]=this.value;markModified()" placeholder="Phrase exemple…">
+        <button class="btn-icon danger" onclick="removePhrase(${i})" title="Supprimer">×</button>`;
+      list.appendChild(row);
+    });
+  }
+  function addPhrase() {
+    intent.examples.phrases.push('');
+    renderPhrases();
+    markModified();
+    const inputs = document.querySelectorAll('#phrases-list input');
+    inputs[inputs.length - 1]?.focus();
+  }
+  function removePhrase(i) {
+    intent.examples.phrases.splice(i, 1);
+    renderPhrases();
+    markModified();
+  }
+
+  // ── SCENARIOS ──────────────────────────────────────────
+  function renderScenarios() {
+    const list = document.getElementById('scenarios-list');
+    list.innerHTML = '';
+    intent.scenarios.forEach((sc, si) => {
+      const card = document.createElement('div');
+      card.className = 'scenario-card';
+      card.id = `scenario-${si}`;
+      const tip = (text) => `<span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">${text}</span></span>`;
+      card.innerHTML = `
+        <div class="scenario-header">
+          <span class="scenario-number">${si + 1}</span>
+          <span class="scenario-name-preview">${escHtml(sc.name || 'Nouveau scénario')}</span>
+          <button class="btn-icon" onclick="moveScenario(${si},-1)" title="Monter" ${si===0?'disabled':''}>↑</button>
+          <button class="btn-icon" onclick="moveScenario(${si},1)" title="Descendre" ${si===intent.scenarios.length-1?'disabled':''}>↓</button>
+          <button class="btn-danger" onclick="removeScenario(${si})">Supprimer</button>
+        </div>
+        <div class="scenario-body">
+          <div class="row-2">
+            <div class="field">
+              <div class="label-row"><label>Nom du scénario</label>${tip("Nom lisible affiché dans les rapports et les logs. Court et descriptif. Ex : «\u00a0Menus déjà disponibles dans le devis\u00a0».")}</div>
+              <input type="text" value="${escAttr(sc.name)}" oninput="intent.scenarios[${si}].name=this.value;updateScenarioPreview(${si},this.value);markModified()" placeholder="Ex: Menus disponibles dans le devis">
+            </div>
+            <div class="field">
+              <div class="label-row"><label>Clé (identifiant technique)</label>${tip("Identifiant unique de ce scénario, en minuscules avec des underscores. Référencé dans les règles de sélection. Ne pas changer après mise en production sauf si vous mettez à jour les règles en même temps.")}</div>
+              <input type="text" value="${escAttr(sc.key)}" oninput="intent.scenarios[${si}].key=this.value;markModified()" placeholder="Ex: menus_already_in_quote">
+            </div>
+          </div>
+          <div class="field">
+            <div class="label-row"><label>Quand l'appliquer</label>${tip("Décrit précisément les conditions (données du dossier, contexte de l'email) qui rendent ce scénario applicable. L'IA compare ces conditions aux données réelles pour choisir le bon scénario.")}</div>
+            <textarea oninput="intent.scenarios[${si}].applicable_when=this.value;markModified()" placeholder="Ex: Les menus sont déjà présents dans le devis et accessibles via le lien.">${escHtml(sc.applicable_when)}</textarea>
+          </div>
+          <div class="field">
+            <div class="label-row"><label>Message clé</label>${tip("L'objectif principal que la réponse doit atteindre. L'IA s'en inspire pour orienter le ton et le contenu de l'email. Formulez-le comme une instruction claire : «\u00a0Informer le client que… et l'inviter à…\u00a0».")}</div>
+            <textarea oninput="intent.scenarios[${si}].key_message=this.value;markModified()" placeholder="Ex: Informer le client que les menus sont disponibles sur le devis et l'inviter à préciser ses choix.">${escHtml(sc.key_message)}</textarea>
+          </div>
+          <div class="field">
+            <div class="label-row"><label>Notes pour l'IA</label>${tip("Instructions supplémentaires que l'IA doit suivre dans ce scénario : ton souhaité, priorité (SLA haute/basse), formulations à éviter ou à privilégier, actions internes à déclencher (ex : escalader en interne). Optionnel mais très utile.")}</div>
+            <textarea oninput="intent.scenarios[${si}].notes=this.value;markModified()" placeholder="Ex: Ton clair et direct. Fournir le lien vers le devis. Scénario par défaut en cas de doute — toujours en dernière position.">${escHtml(sc.notes || '')}</textarea>
+          </div>
+          <hr class="divider">
+          <div class="label-row"><label>Emails à générer</label>${tip("Liste des emails que l'IA doit rédiger pour ce scénario. Chaque email cible soit le client (l'organisateur), soit le prestataire (hôtel, traiteur…). Un scénario peut générer plusieurs emails simultanément.")}</div>
+          <div id="actions-${si}" style="margin-top:8px"></div>
+          <button class="btn-add mt-8" onclick="addAction(${si})">+ Ajouter un email</button>
+        </div>`;
+      list.appendChild(card);
+      renderActions(si);
+    });
+  }
+
+  function updateScenarioPreview(si, val) {
+    const el = document.querySelector(`#scenario-${si} .scenario-name-preview`);
+    if (el) el.textContent = val || 'Nouveau scénario';
+  }
+
+  function addScenario() {
+    intent.scenarios.push({
+      key: '', name: '', applicable_when: '', key_message: '',
+      actions: [{ type: 'draft_email', recipient: 'client', email_outline: [''] }],
+      notes: ''
+    });
+    renderScenarios();
+    markModified();
+    document.getElementById(`scenario-${intent.scenarios.length - 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function removeScenario(si) {
+    if (!confirm(`Supprimer le scénario "${intent.scenarios[si].name || si + 1}" ?`)) return;
+    intent.scenarios.splice(si, 1);
+    renderScenarios();
+    markModified();
+  }
+
+  function moveScenario(si, dir) {
+    const target = si + dir;
+    if (target < 0 || target >= intent.scenarios.length) return;
+    [intent.scenarios[si], intent.scenarios[target]] = [intent.scenarios[target], intent.scenarios[si]];
+    renderScenarios();
+    markModified();
+  }
+
+  // ── ACTIONS (email drafts within scenarios) ────────────
+  function renderActions(si) {
+    const container = document.getElementById(`actions-${si}`);
+    if (!container) return;
+    container.innerHTML = '';
+    const actions = intent.scenarios[si].actions || [];
+    actions.forEach((action, ai) => {
+      const card = document.createElement('div');
+      card.className = 'action-card';
+      const recipientBadgeClass = action.recipient === 'client' ? 'client' : 'presta';
+      const recipientLabel = action.recipient === 'client' ? 'Client' : 'Prestataire';
+      card.innerHTML = `
+        <div class="action-header">
+          <span class="recipient-badge ${recipientBadgeClass}">${recipientLabel}</span>
+          <select class="recipient-select" onchange="intent.scenarios[${si}].actions[${ai}].recipient=this.value;renderActions(${si});markModified()">
+            <option value="client" ${action.recipient==='client'?'selected':''}>→ Client</option>
+            <option value="presta" ${action.recipient==='presta'?'selected':''}>→ Prestataire</option>
+          </select>
+          <span style="flex:1"></span>
+          <button class="btn-danger" onclick="removeAction(${si},${ai})">Supprimer</button>
+        </div>
+        <div class="action-body">
+          <div class="label-row">
+            <label>Points de l'email</label>
+            <span class="tooltip-wrap"><span class="tooltip-icon">i</span><span class="tooltip-box">Les points que l'email doit couvrir, dans l'ordre. L'IA rédige l'email en développant chacun de ces points. Soyez précis sur ce que chaque point doit contenir — plus c'est détaillé, meilleure est la rédaction. Vous pouvez utiliser [NOM_VARIABLE] pour indiquer où insérer des données du dossier.</span></span>
+          </div>
+          <div id="outline-${si}-${ai}" class="bullet-list" style="margin-top:6px"></div>
+          <button class="btn-add mt-8" onclick="addOutlinePoint(${si},${ai})">+ Ajouter un point</button>
+        </div>`;
+      container.appendChild(card);
+      renderOutline(si, ai);
+    });
+  }
+
+  function addAction(si) {
+    if (!intent.scenarios[si].actions) intent.scenarios[si].actions = [];
+    intent.scenarios[si].actions.push({ type: 'draft_email', recipient: 'client', email_outline: [''] });
+    renderActions(si);
+    markModified();
+  }
+
+  function removeAction(si, ai) {
+    intent.scenarios[si].actions.splice(ai, 1);
+    renderActions(si);
+    markModified();
+  }
+
+  // ── EMAIL OUTLINE ──────────────────────────────────────
+  function renderOutline(si, ai) {
+    const container = document.getElementById(`outline-${si}-${ai}`);
+    if (!container) return;
+    container.innerHTML = '';
+    const points = intent.scenarios[si].actions[ai].email_outline || [];
+    points.forEach((pt, pi) => {
+      const row = document.createElement('div');
+      row.className = 'bullet-item';
+      row.innerHTML = `<input type="text" value="${escAttr(pt)}" oninput="intent.scenarios[${si}].actions[${ai}].email_outline[${pi}]=this.value;markModifiedWithSlots()" placeholder="Point de l'email…">
+        <button class="btn-icon danger" onclick="removeOutlinePoint(${si},${ai},${pi})" title="Supprimer">×</button>`;
+      container.appendChild(row);
+    });
+  }
+
+  function addOutlinePoint(si, ai) {
+    intent.scenarios[si].actions[ai].email_outline.push('');
+    renderOutline(si, ai);
+    markModifiedWithSlots();
+    const inputs = document.querySelectorAll(`#outline-${si}-${ai} input`);
+    inputs[inputs.length - 1]?.focus();
+  }
+
+  function removeOutlinePoint(si, ai, pi) {
+    intent.scenarios[si].actions[ai].email_outline.splice(pi, 1);
+    renderOutline(si, ai);
+    markModifiedWithSlots();
+  }
+
+  // ── RESEARCH AREAS ─────────────────────────────────────
+  function renderResearch() {
+    const tbody = document.getElementById('research-list');
+    tbody.innerHTML = '';
+    (intent.area_of_research || []).forEach((item, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-name"><input type="text" value="${escAttr(item.name)}" oninput="intent.area_of_research[${i}].name=this.value;markModified()" placeholder="supplier_proposals[].name"></td>
+        <td><input type="text" value="${escAttr(item.notes)}" oninput="intent.area_of_research[${i}].notes=this.value;markModified()" placeholder="Description…"></td>
+        <td><button class="btn-icon danger" onclick="removeResearch(${i})">×</button></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function addResearch() {
+    if (!intent.area_of_research) intent.area_of_research = [];
+    intent.area_of_research.push({ name: '', notes: '' });
+    renderResearch();
+    markModified();
+    const inputs = document.querySelectorAll('#research-list input');
+    inputs[inputs.length - 2]?.focus();
+  }
+
+  function removeResearch(i) {
+    intent.area_of_research.splice(i, 1);
+    renderResearch();
+    markModified();
+  }
+
+  // ── RENDER ALL ─────────────────────────────────────────
+  function renderAll() {
+    document.getElementById('f-intent_type').value = intent.intent_type || '';
+    document.getElementById('f-summary').value = intent.summary || '';
+    document.getElementById('f-rule-client').value = intent.selection_rules?.client || '';
+    document.getElementById('f-rule-presta').value = intent.selection_rules?.presta || '';
+    document.getElementById('intent-badge').textContent = intent.intent_type || '';
+    document.title = (intent.intent_type || 'Intention') + ' — Aleou';
+    renderTags();
+    renderKeywords();
+    renderPhrases();
+    renderScenarios();
+    renderResearch();
+    renderSlots();
+    renderSpecial();
+    renderVerification();
+  }
+
+  // ── COLLECT ALL (before save) ──────────────────────────
+  function collectAll() {
+    intent.intent_type = document.getElementById('f-intent_type').value.trim();
+    intent.summary = document.getElementById('f-summary').value.trim();
+    if (!intent.selection_rules) intent.selection_rules = {};
+    intent.selection_rules.client = document.getElementById('f-rule-client').value.trim();
+    intent.selection_rules.presta = document.getElementById('f-rule-presta').value.trim();
+    if (!intent.special_values) intent.special_values = []; // champ non utilisé, conservé vide pour compatibilité
+    document.getElementById('intent-badge').textContent = intent.intent_type;
+  }
+
+  // ── UTILS ──────────────────────────────────────────────
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escAttr(s) {
+    return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+</script>
+</body>
+</html>
