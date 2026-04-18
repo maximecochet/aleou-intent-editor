@@ -265,6 +265,28 @@
   /* ── DASHBOARD STYLES ──────────────────────────────────── */
   #view-dashboard { display: none; padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
 
+  /* API config banner */
+  .api-config {
+    background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+    padding: 18px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .api-config label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .api-config input[type="text"] { flex: 1; min-width: 280px; padding: 7px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; color: var(--gray-900); background: var(--gray-50); }
+  .api-config input[type="text"]:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); background: white; }
+  .api-status { font-size: 12px; color: var(--gray-400); }
+  .api-status.ok { color: var(--success); }
+  .api-status.err { color: var(--danger); }
+
+  /* Loading spinner */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--gray-200); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CSV fallback toggle */
+  .csv-fallback-toggle { font-size: 12px; color: var(--blue); cursor: pointer; text-decoration: underline; white-space: nowrap; }
+  .csv-fallback-panel { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-200); }
+  .csv-fallback-panel.open { display: block; }
+
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .kpi-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: 16px 20px; }
   .kpi-card .kpi-label { font-size: 11px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
@@ -550,23 +572,32 @@
 <!-- ── DASHBOARD ─────────────────────────────────────────── -->
 <div id="view-dashboard" style="display:none">
 
-  <!-- Upload zone -->
-  <div id="csv-upload-section">
-    <div class="csv-upload-zone" id="csv-drop-zone">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray-400);margin-bottom:12px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <p>Glisse-dépose ton fichier CSV ici</p>
-      <p><strong>ou</strong></p>
-      <button class="btn btn-primary" onclick="document.getElementById('csv-input').click()">Choisir un fichier</button>
+  <!-- API config + refresh -->
+  <div class="api-config">
+    <label>Webhook n8n</label>
+    <input type="text" id="webhook-url" placeholder="https://ton-n8n.com/webhook/comparison-data" oninput="saveWebhookUrl()">
+    <button class="btn btn-primary" onclick="fetchFromAPI()" id="btn-refresh">
+      Actualiser
+    </button>
+    <span class="api-status" id="api-status"></span>
+    <span class="csv-fallback-toggle" onclick="toggleCsvFallback()">ou charger un CSV</span>
+  </div>
+
+  <!-- CSV fallback (masqué par défaut) -->
+  <div class="csv-fallback-panel" id="csv-fallback-panel">
+    <div class="csv-upload-zone" id="csv-drop-zone" style="margin:0">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray-400);margin-bottom:8px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p style="margin-bottom:8px;">Glisse-dépose un fichier CSV ou</p>
+      <button class="btn btn-secondary" onclick="document.getElementById('csv-input').click()">Choisir un fichier</button>
       <input type="file" id="csv-input" accept=".csv" style="display:none">
-      <p style="margin-top:16px;font-size:12px;color:var(--gray-400);">Exporte depuis Google Sheets → Fichier → Télécharger → CSV</p>
     </div>
   </div>
 
   <!-- Dashboard content -->
   <div id="dash-content" style="display:none">
     <div class="dash-top-bar">
-      <h2>Fichier : <strong id="dash-file-name">—</strong></h2>
-      <button class="btn btn-secondary" onclick="resetDashboard()">← Charger un autre fichier</button>
+      <h2>Source : <strong id="dash-file-name">—</strong></h2>
+      <button class="btn btn-secondary" onclick="fetchFromAPI()">↻ Actualiser</button>
     </div>
     <div class="kpi-grid" id="kpi-grid"></div>
     <div class="charts-row">
@@ -660,6 +691,7 @@ function showView(name) {
     btnLoad.style.display = 'none'; saveBtn.style.display = 'none';
     saveInd.style.display = 'none'; intentBadge.style.display = 'none';
     fileInfo.style.display = allRows.length ? '' : 'none';
+    initDashboard();
   }
 }
 
@@ -958,6 +990,70 @@ let filteredRows = [];
 let sortKey = '';
 let sortAsc = true;
 
+// ── Webhook URL (persisted in localStorage) ──────────────────
+const WEBHOOK_KEY = 'aleou_webhook_url';
+
+function saveWebhookUrl() {
+  const url = document.getElementById('webhook-url').value.trim();
+  if (url) localStorage.setItem(WEBHOOK_KEY, url);
+  else localStorage.removeItem(WEBHOOK_KEY);
+}
+
+function loadWebhookUrl() {
+  const saved = localStorage.getItem(WEBHOOK_KEY);
+  if (saved) document.getElementById('webhook-url').value = saved;
+}
+
+function setApiStatus(msg, type) {
+  const el = document.getElementById('api-status');
+  el.textContent = msg;
+  el.className = 'api-status' + (type ? ' ' + type : '');
+}
+
+function toggleCsvFallback() {
+  document.getElementById('csv-fallback-panel').classList.toggle('open');
+}
+
+// ── Fetch from n8n API ───────────────────────────────────────
+async function fetchFromAPI() {
+  const url = document.getElementById('webhook-url').value.trim();
+  if (!url) { setApiStatus('⚠ Renseigne l\'URL du webhook d\'abord', 'err'); return; }
+
+  const btn = document.getElementById('btn-refresh');
+  btn.innerHTML = '<span class="spinner"></span>Chargement…';
+  btn.disabled = true;
+  setApiStatus('', '');
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) throw new Error('Réponse vide ou format inattendu');
+
+    // Normalize: convert all values to strings (Google Sheets can return numbers)
+    allRows = data.map(row => {
+      const normalized = {};
+      Object.entries(row).forEach(([k, v]) => { normalized[k] = v === null || v === undefined ? '' : String(v); });
+      return normalized;
+    });
+
+    const now = new Date().toLocaleTimeString('fr-FR');
+    document.getElementById('dash-file-name').textContent = 'API n8n · ' + allRows.length + ' lignes';
+    document.getElementById('topbar-file-info').textContent = 'Actualisé à ' + now;
+    document.getElementById('topbar-file-info').style.display = '';
+    document.getElementById('dash-content').style.display = 'block';
+    setApiStatus('✓ ' + allRows.length + ' lignes · ' + now, 'ok');
+    buildFilters(); computeKPIs(); computeCharts(); applyFilters();
+
+  } catch(err) {
+    setApiStatus('✗ Erreur : ' + err.message, 'err');
+  } finally {
+    btn.innerHTML = 'Actualiser';
+    btn.disabled = false;
+  }
+}
+
+// ── CSV fallback ─────────────────────────────────────────────
 function parseCSV(text) {
   const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   if (lines.length < 2) return [];
@@ -990,11 +1086,12 @@ function loadCSV(file) {
     try {
       allRows = parseCSV(e.target.result);
       if (!allRows.length) { alert('Fichier vide ou format invalide.'); return; }
-      document.getElementById('dash-file-name').textContent = file.name;
-      document.getElementById('topbar-file-info').textContent = file.name + ' · ' + allRows.length + ' lignes';
+      document.getElementById('dash-file-name').textContent = file.name + ' · ' + allRows.length + ' lignes';
+      document.getElementById('topbar-file-info').textContent = file.name;
       document.getElementById('topbar-file-info').style.display = '';
-      document.getElementById('csv-upload-section').style.display = 'none';
-      document.getElementById('dash-content').style.display = '';
+      document.getElementById('dash-content').style.display = 'block';
+      document.getElementById('csv-fallback-panel').classList.remove('open');
+      setApiStatus('', '');
       buildFilters(); computeKPIs(); computeCharts(); applyFilters();
     } catch(err) { alert('Erreur de lecture : ' + err.message); }
   };
@@ -1007,11 +1104,11 @@ csvDropZone.addEventListener('dragleave', () => csvDropZone.classList.remove('dr
 csvDropZone.addEventListener('drop', e => { e.preventDefault(); csvDropZone.classList.remove('drag-over'); loadCSV(e.dataTransfer.files[0]); });
 document.getElementById('csv-input').addEventListener('change', e => { loadCSV(e.target.files[0]); e.target.value=''; });
 
-function resetDashboard() {
-  allRows = []; filteredRows = [];
-  document.getElementById('dash-content').style.display = 'none';
-  document.getElementById('csv-upload-section').style.display = '';
-  document.getElementById('topbar-file-info').style.display = 'none';
+// ── Init dashboard when view opens ───────────────────────────
+function initDashboard() {
+  loadWebhookUrl();
+  const url = localStorage.getItem(WEBHOOK_KEY);
+  if (url) fetchFromAPI();
 }
 
 function computeKPIs() {
