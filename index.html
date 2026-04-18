@@ -5,6 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aleou — Outils</title>
 <style>
+  /* ── LOGIN ─────────────────────────────────────────────── */
+  #login-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--gray-50, #F9FAFB);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card {
+    background: white; border: 1px solid #E5E7EB;
+    border-radius: 12px; padding: 40px 36px;
+    width: 100%; max-width: 360px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .login-card .login-logo { font-size: 22px; font-weight: 700; color: #2563EB; margin-bottom: 6px; }
+  .login-card .login-sub { font-size: 13px; color: #9CA3AF; margin-bottom: 28px; }
+  .login-card input[type="password"] {
+    width: 100%; padding: 10px 14px; border: 1px solid #E5E7EB;
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+    color: #111827; margin-bottom: 12px; text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .login-card input[type="password"]:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .login-card input[type="password"].shake { animation: shake 0.35s ease; border-color: #DC2626; }
+  .login-card .login-btn {
+    width: 100%; padding: 10px; background: #2563EB; color: white;
+    border: none; border-radius: 6px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .login-card .login-btn:hover { background: #1D4ED8; }
+  .login-card .login-error { font-size: 12px; color: #DC2626; margin-top: 10px; min-height: 16px; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
   /* ── VARIABLES ────────────────────────────────────────── */
   :root {
     --blue: #2563EB;
@@ -379,6 +411,17 @@
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN OVERLAY ────────────────────────────────────── -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">Aleou</div>
+    <div class="login-sub">Outils internes — accès restreint</div>
+    <input type="password" id="login-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="login-btn" onclick="checkPassword()">Accéder</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
 
 <!-- ── TOPBAR ───────────────────────────────────────────── -->
 <div id="topbar">
@@ -1247,6 +1290,45 @@ function closeModal(e) {
   if (!e || e.target===document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open');
 }
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+// ══════════════════════════════════════════════════════════════
+// AUTH — mot de passe : aleou2025
+// Pour changer : python3 -c "import hashlib; print(hashlib.sha256(b'NOUVEAU_MDP').hexdigest())"
+// ══════════════════════════════════════════════════════════════
+const PASSWORD_HASH = '91c960f203556bad9b1521384c32133796680b7e4b8f4944a9c1213429abd1d5';
+const AUTH_KEY = 'aleou_auth';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword() {
+  const input = document.getElementById('login-input');
+  const error = document.getElementById('login-error');
+  const hash = await sha256(input.value);
+  if (hash === PASSWORD_HASH) {
+    sessionStorage.setItem(AUTH_KEY, '1');
+    document.getElementById('login-overlay').style.display = 'none';
+    error.textContent = '';
+  } else {
+    input.value = '';
+    error.textContent = 'Mot de passe incorrect.';
+    input.classList.remove('shake');
+    void input.offsetWidth; // force reflow pour relancer l'animation
+    input.classList.add('shake');
+    input.focus();
+  }
+}
+
+// Vérification au chargement
+(function() {
+  if (sessionStorage.getItem(AUTH_KEY) === '1') {
+    document.getElementById('login-overlay').style.display = 'none';
+  } else {
+    document.getElementById('login-input').focus();
+  }
+})();
 </script>
 </body>
 </html>
